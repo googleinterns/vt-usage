@@ -1,3 +1,3 @@
 runtime: python38
 service: webhook
-entrypoint: uvicorn --port $PORT
+entrypoint: uvicorn --host 0.0.0.0 --port $PORT --no-access-log main:app --log-level error
