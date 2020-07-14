@@ -1,1 +1,2 @@
 runtime: python38
+entrypoint: uvicorn --host 0.0.0.0 --port $PORT --no-access-log main:app --log-level error
