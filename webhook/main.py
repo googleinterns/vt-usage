@@ -1,4 +1,6 @@
-from fastapi import FastAPI, Request, Header, HTTPException
+from fastapi import FastAPI, Request, Header, HTTPException, Body
+from pydantic import BaseModel
+from typing import List, Optional, Dict, Union
 
 app = FastAPI()
 
@@ -8,17 +10,14 @@ async def root():
     return {"data": "Hello World"}
 
 
+class VTAPI(BaseModel):
+  data: Union[str, List, Dict]
+  links: Optional[Dict]
+  meta: Optional[Dict]
+
 @app.post("/query-results/")
-async def query_results(request: Request):
-    if request.headers.get("X-Appengine-Inbound-Appid", None) != 'virustotal-step-2020':
+async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = Header(None)):
+    if x_appengine_inbound_appid != 'virustotal-step-2020':
         raise HTTPException(status_code=403, detail="Access forbidden")
 
-    try:
-        data = await request.json()
-    except RuntimeError:
-        data = None
-
-    if "data" not in data:
-        raise HTTPException(status_code=400, detail="Bad request")
-
-    print(data)
+    return data
