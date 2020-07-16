@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from default.main import app, datastore_client
+from default.main import app, models
 
 client = TestClient(app)
 
@@ -12,7 +12,11 @@ def test_index():
         assert response.text == correct.read()
 
 
-def test_userdata():
+def test_userdata(monkeypatch):
+    def put(udata):
+        assert udata == models.Userdata(apikey='test_apikey', webhook='test_webhook')
+
+    monkeypatch.setattr(models.Userdata, 'put', put)
     response = client.post(
         '/userdata/',
         data={
@@ -22,10 +26,19 @@ def test_userdata():
     assert response.status_code == 200
     with open('tests/testfiles/userdata.html', 'r') as correct:
         assert response.text == correct.read()
-    
-    query = datastore_client.query(kind='userdata')
-    query.add_filter('apikey', '=', 'test_apikey')
-    result = list(query.fetch())
-    assert result != []
-    key = result[0].key
-    datastore_client.delete(key)
+
+
+def test_wrong_userdata():
+    response = client.post(
+        '/userdata/',
+        data={
+            'apikey': 'test_apikey',
+        })
+    assert response.status_code == 422
+
+    response = client.post(
+        '/userdata/',
+        data={
+            'webhook': 'test_webhook',
+        })
+    assert response.status_code == 422
