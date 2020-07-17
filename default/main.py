@@ -24,4 +24,4 @@ async def userdata(request: Request, apikey: str = Form(...), webhook: str = For
     with client.context():
         task = models.Userdata(apikey=apikey, webhook=webhook)
         task.put()
-    return templates.TemplateResponse("index.html", {'request': request, 'content': 'Your answer successfully saved'})
+    return templates.TemplateResponse("index.html", {'request': request, 'content': 'Your answer was successfully saved'})
