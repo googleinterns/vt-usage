@@ -1,7 +1,9 @@
 click==7.1.2
 fastapi==0.59.0
+google-cloud-ndb==1.4.1
 h11==0.9.0
 httptools==0.1.1
+py3-validate-email==0.2.9
 pydantic==1.6
 starlette==0.13.4
 uvicorn==0.11.5
