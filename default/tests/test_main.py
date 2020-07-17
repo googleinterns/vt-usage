@@ -13,19 +13,30 @@ def test_index():
 
 
 def test_userdata(monkeypatch):
-    def put(udata):
-        assert udata == models.Userdata(apikey='test_apikey', webhook='test_webhook')
+    webhooks = [
+        'webhook.com',
+        'test.webhook.com',
+        'https://web_hook.com',
+        'webhook.com/a+b+c',
+        'http://webhook.com/#1a',
+        'webhook.com:80/'
+        'http://test.webhook.com:8080/a/b/c_?d=e',
+    ]
 
-    monkeypatch.setattr(models.Userdata, 'put', put)
-    response = client.post(
-        '/userdata/',
-        data={
-            'apikey': 'test_apikey',
-            'webhook': 'test_webhook',
-        })
-    assert response.status_code == 200
-    with open('tests/testfiles/userdata.html', 'r') as correct:
-        assert response.text == correct.read()
+    for webhook in webhooks:
+        def put(udata):
+            assert udata == models.Userdata(apikey='test_apikey', webhook=webhook)
+
+        monkeypatch.setattr(models.Userdata, 'put', put)
+        response = client.post(
+            '/userdata/',
+            data={
+                'apikey': 'test_apikey',
+                'webhook': webhook,
+            })
+        assert response.status_code == 200
+        with open('tests/testfiles/userdata.html', 'r') as correct:
+            assert response.text == correct.read()
 
 
 def test_wrong_userdata():
@@ -39,6 +50,14 @@ def test_wrong_userdata():
     response = client.post(
         '/userdata/',
         data={
-            'webhook': 'test_webhook',
+            'webhook': 'test_webhook.com',
         })
     assert response.status_code == 422
+
+    response = client.post(
+        '/userdata/',
+        data={
+            'apikey': 'test_apikey',
+            'webhook': 'test_webhook',
+        })
+    assert response.status_code == 400
