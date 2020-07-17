@@ -4,7 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from google.cloud import ndb
 
-from default import models
+import models
 
 app = FastAPI()
 
