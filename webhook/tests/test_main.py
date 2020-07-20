@@ -140,3 +140,17 @@ def test_query_results_missing_field_in_data():
             })
 
         assert r.status_code == 422
+
+
+def test_email_address_normal():
+    data = {
+        'email': "mniedziolka@google.com"
+    }
+
+    r = client.put(
+        '/email-address/abab',
+        json=data
+    )
+
+    print(r.json())
+    assert r.status_code == 200

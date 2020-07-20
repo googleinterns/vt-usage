@@ -43,14 +43,7 @@ async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = 
 
 
 class Email(BaseModel):
-    api_key: str
     email: str
-
-    @validator('api_key')
-    def api_key_validator(cls, v):
-        if not v.isalnum():
-            raise ValueError("API key must be alphanumeric!")
-        return v
 
     @validator('email')
     def email_validator(cls, v):
@@ -62,6 +55,16 @@ class Email(BaseModel):
         return v
 
 
-@app.put("/email-address/")
-async def set_email(data: Email):
-    return data
+class UserEmail(ndb.Model):
+    api_key: ndb.StringProperty
+    email: ndb.StringProperty
+
+
+@app.put("/email-address/{api_key}")
+async def set_email(api_key: str, email: Email):
+    if not api_key.isalnum():
+        raise HTTPException(status_code=400, detail="API key must be alphanumeric!")
+
+    return email
+    # with client.context():
+    #     UserEmail(api_key=api_key, email=email).put()
