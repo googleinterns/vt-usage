@@ -144,11 +144,12 @@ def test_query_results_missing_field_in_data():
 
 def test_email_address_normal():
     data = {
+        'api_key': "abcabc",
         'email': "mniedziolka@google.com"
     }
 
     r = client.put(
-        '/email-address/abab',
+        '/email-address/',
         json=data
     )
 

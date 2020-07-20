@@ -36,7 +36,6 @@ pluggy==0.13.1
 post==0.0.0
 protobuf==3.12.2
 py==1.9.0
-py3-validate-email==0.2.9
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycodestyle==2.6.0
