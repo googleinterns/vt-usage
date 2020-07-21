@@ -1,7 +1,6 @@
 import aiohttp
 import certifi
 import re
-import requests
 import ssl
 from fastapi import FastAPI, Request, Form, HTTPException, Header
 from fastapi.staticfiles import StaticFiles

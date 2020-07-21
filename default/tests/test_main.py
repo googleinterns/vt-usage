@@ -1,6 +1,5 @@
 import aiohttp
 import pytest
-import requests
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from unittest.mock import ANY, patch
