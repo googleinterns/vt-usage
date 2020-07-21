@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from webhook.main import app
+from main import app
 
 client = TestClient(app)
 
@@ -148,7 +148,7 @@ def test_email_address_normal():
         'email': "mniedziolka@google.com"
     }
 
-    r = client.put(
+    r = client.post(
         '/email-address/',
         json=data
     )
