@@ -50,6 +50,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         ssl=ssl_context
                     ) as resp:
                     json = await resp.json()
-                    assert resp.status == 200
+                    if resp.status != 200:
+                        raise HTTPException(400, 'Bad request')
                     httpSession.post(user.webhook, data=json)
         return 'Success'
