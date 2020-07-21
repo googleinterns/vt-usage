@@ -1,5 +1,8 @@
+import aiohttp
+import certifi
 import re
 import requests
+import ssl
 from fastapi import FastAPI, Request, Form, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -15,6 +18,7 @@ app.mount('/static', StaticFiles(directory='static'), name='static')
 templates = Jinja2Templates(directory='templates')
 
 client = ndb.Client()
+ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 
 @app.get('/')
@@ -33,14 +37,20 @@ async def userdata(request: Request, apikey: str = Form(...), webhook: str = For
     return templates.TemplateResponse("index.html", {'request': request, 'content': 'Your answer was successfully saved'})
 
 
-@app.get('/run_queries/')  # TODO: test it
+@app.get('/run_queries/')
 async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
     if x_appengine_cron != 'true':
         raise HTTPException(403, 'Access forbidden')
-    
+
     with client.context():
         for user in models.Userdata.query():
-            vt_data = requests.get('https://www.virustotal.com/api/v3/intelligence/search?query={query}'.format(query=user.vt_query),
-                                   headers={'x-apikey': user.apikey}).json()
-            requests.post(user.webhook, vt_data)
+            async with aiohttp.ClientSession() as httpSession:
+                async with httpSession.get(
+                        'https://www.virustotal.com/api/v3/intelligence/search?query={query}'.format(query=user.vt_query),
+                        headers={'x-apikey': user.apikey},
+                        ssl=ssl_context
+                    ) as resp:
+                    json = await resp.json()
+                    assert resp.status == 200
+                    httpSession.post(user.webhook, data=json)
         return 'Success'

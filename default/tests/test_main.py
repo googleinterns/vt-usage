@@ -1,18 +1,14 @@
+import aiohttp
+import pytest
 import requests
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock
+from unittest.mock import ANY, patch
+from asynctest import CoroutineMock, MagicMock as AsyncMagicMock, patch as asyncpatch
 
 from main import app, models
 
 client = TestClient(app)
-
-class MockHTTPResponse:
-    def __init__(self, data=None):
-        self.data = data
-    
-    def json(self):
-        return self.data
 
 def test_index():
     response = client.get('/')
@@ -82,11 +78,15 @@ def test_wrong_userdata():
     assert response.status_code == 400
 
 
-def test_run_queries():
+@patch('models.Userdata.query', return_value=[models.Userdata(apikey='test_apikey', webhook='test_webhook', vt_query='test_vt_query')])
+@asyncpatch('aiohttp.ClientSession.get')
+@asyncpatch('aiohttp.ClientSession.post')
+def test_run_queries(mock_q, mock_get, mock_post):
     test_vt_data = {'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}}
-    models.Userdata.query = MagicMock(return_value=[models.Userdata(apikey='test_apikey', webhook='test_webhook', vt_query='test_vt_query')])
-    requests.get = MagicMock(return_value=MockHTTPResponse(test_vt_data))
-    requests.post = MagicMock()
+
+    mock_get.return_value.__aenter__.return_value.json = CoroutineMock()
+    mock_get.return_value.__aenter__.return_value.status = 200
+    mock_get.return_value.__aenter__.return_value.json.return_value = test_vt_data
 
     response = client.get(
         '/run_queries/',
@@ -96,8 +96,8 @@ def test_run_queries():
     assert response.status_code == 200
     assert response.text == '"Success"'
     models.Userdata.query.assert_called_once()
-    requests.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers={'x-apikey': 'test_apikey'})
-    requests.post.assert_called_once_with('test_webhook', test_vt_data)
+    aiohttp.ClientSession.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers={'x-apikey': 'test_apikey'}, ssl=ANY)
+    aiohttp.ClientSession.post.assert_called_once_with('test_webhook', data=test_vt_data)
 
 
 def test_bad_run_queries():
