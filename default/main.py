@@ -1,5 +1,6 @@
 import aiohttp
 import certifi
+import logging
 import re
 import ssl
 from fastapi import FastAPI, Request, Form, HTTPException, Header
@@ -51,6 +52,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                     ) as resp:
                     json = await resp.json()
                     if resp.status != 200:
+                        logging.error(resp.text())
                         raise HTTPException(400, 'Bad request')
                     httpSession.post(user.webhook, data=json)
         return 'Success'
