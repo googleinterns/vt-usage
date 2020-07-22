@@ -1,4 +1,5 @@
 from enum import Enum
+from google.cloud import ndb
 from pydantic import BaseModel, validator
 from typing import List, Optional, Dict, Union
 
@@ -42,3 +43,8 @@ class EmailWrapper(BaseModel):
         if not re.search(regex, v):
             raise ValueError("Email address is not valid!")
         return v
+
+
+class UserEmail(ndb.Model):
+    api_key: ndb.StringProperty
+    email: ndb.StringProperty

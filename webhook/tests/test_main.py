@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from main import app
+from models import UserEmail
 
 client = TestClient(app)
 
@@ -142,16 +143,20 @@ def test_query_results_missing_field_in_data():
         assert r.status_code == 422
 
 
-def test_email_address_normal():
+def test_email_address_new(monkeypatch):
     data = {
-        'api_key': "abcabc",
-        'email': "mniedziolka@google.com"
+        "api_key": "abcabc",
+        "email": "some@email.example"
     }
+
+    def put(udata):
+        assert udata == UserEmail(api_key=data["api_key"], email=data["email"])
+    
+    monkeypatch.setattr(UserEmail, 'put', put)
 
     r = client.post(
         '/email-address/',
         json=data
     )
 
-    print(r.json())
     assert r.status_code == 200

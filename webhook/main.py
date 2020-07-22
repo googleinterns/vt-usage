@@ -1,8 +1,8 @@
-from fastapi import FastAPI, Header, HTTPException
+from fastapi import FastAPI, Header, HTTPException, status
 from google.cloud import ndb
 from typing import Optional, Dict
 
-from models import VTAPI, EmailWrapper
+from models import VTAPI, EmailWrapper, UserEmail
 
 app = FastAPI()
 client = ndb.Client()
@@ -16,19 +16,27 @@ async def root():
 @app.post("/query-results/")
 async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = Header(None)):
     if x_appengine_inbound_appid != 'virustotal-step-2020':
-        raise HTTPException(status_code=403, detail="Access forbidden")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
     return data
 
 
-class UserEmail(ndb.Model):
-    api_key: ndb.StringProperty
-    email: ndb.StringProperty
-
-
 @app.post("/email-address/")
 async def set_email(content: EmailWrapper):
+    with client.transaction():
+        q = UserEmail.query(api_key=content.api_key)
+        q_result = list(q.fetch())
+        if len(q_result) > 1:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                detail="There exist multiple rows with same api key")
+
+        obj = None
+        if len(q_result) == 0:
+            obj = UserEmail(api_key=content.api_key, email=content.email)
+        else:
+            obj = q_result[0]
+        
+        obj.put()
 
     return content
-    # with client.context():
-    #     UserEmail(api_key=api_key, email=email).put()
