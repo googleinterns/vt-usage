@@ -1,5 +1,9 @@
+import aiohttp
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from unittest.mock import ANY, patch
+from asynctest import CoroutineMock, MagicMock as AsyncMagicMock, patch as asyncpatch
 
 from main import app, models
 
@@ -25,7 +29,7 @@ def test_userdata(monkeypatch):
 
     for webhook in webhooks:
         def put(udata):
-            assert udata == models.Userdata(apikey='test_apikey', webhook=webhook)
+            assert udata == models.Userdata(apikey='test_apikey', webhook=webhook, vt_query='test_vt_query')
 
         monkeypatch.setattr(models.Userdata, 'put', put)
         response = client.post(
@@ -33,6 +37,7 @@ def test_userdata(monkeypatch):
             data={
                 'apikey': 'test_apikey',
                 'webhook': webhook,
+                'vt_query': 'test_vt_query'
             })
         assert response.status_code == 200
         with open('tests/testfiles/userdata.html', 'r') as correct:
@@ -60,4 +65,42 @@ def test_wrong_userdata():
             'apikey': 'test_apikey',
             'webhook': 'test_webhook',
         })
+    assert response.status_code == 422
+
+    response = client.post(
+        '/userdata/',
+        data={
+            'apikey': 'test_apikey',
+            'webhook': 'test_webhook',
+            'vt_query': 'test_vt_query',
+        })
     assert response.status_code == 400
+
+
+@patch('models.Userdata.query', return_value=[models.Userdata(apikey='test_apikey', webhook='test_webhook', vt_query='test_vt_query')])
+@asyncpatch('aiohttp.ClientSession.get')
+@asyncpatch('aiohttp.ClientSession.post')
+def test_run_queries(mock_q, mock_get, mock_post):
+    test_vt_data = {'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}}
+
+    mock_get.return_value.__aenter__.return_value.json = CoroutineMock()
+    mock_get.return_value.__aenter__.return_value.status = 200
+    mock_get.return_value.__aenter__.return_value.json.return_value = test_vt_data
+
+    response = client.get(
+        '/run_queries/',
+        headers={'X-Appengine-Cron': 'true'}
+    )
+
+    assert response.status_code == 200
+    assert response.text == '"Success"'
+    models.Userdata.query.assert_called_once()
+    aiohttp.ClientSession.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers={'x-apikey': 'test_apikey'}, ssl=ANY)
+    aiohttp.ClientSession.post.assert_called_once_with('test_webhook', data=test_vt_data)
+
+
+def test_bad_run_queries():
+    response = client.get(
+        '/run_queries/'
+    )
+    assert response.status_code == 403
