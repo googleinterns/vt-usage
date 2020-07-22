@@ -1,6 +1,6 @@
 cron:
 - description: "Retrieve VTI data using users' queries"
-  url: /run_queries
+  url: /run_queries/
   schedule: every 1 hours
   retry_parameters:
     min_backoff_seconds: 2.5
