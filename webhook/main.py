@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Header, HTTPException, status
+from fastapi import FastAPI, Header, HTTPException, status, Response
 from google.cloud import ndb
 from typing import Optional, Dict
 
@@ -23,24 +23,23 @@ async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = 
 
 
 @ndb.transactional
-def update_email(content: EmailWrapper):
+def update_email(dict: Dict):
+    raise "whatever"
+    content = dict["content"]
+    response = dict["response"]
     with client.context():
-        q = UserEmail.query(api_key=content.api_key)
-        q_result = list(q.fetch())
-        if len(q_result) > 1:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                detail="There exist multiple rows with same api key")
-
-        obj = None
-        if len(q_result) == 0:
-            obj = UserEmail(api_key=content.api_key, email=content.email)
+        email_obj = UserEmail.get_by_id(content)
+        if email_obj is None:
+            email_obj = UserEmail(api_key=content.api_key, email=content.email)
+            response.status_code = status.HTTP_201_CREATED
         else:
-            obj = q_result[0]
-        
-        obj.put()
+            email_obj.email = content.email
+            response.status_code = status.HTTP_200_OK
+
+        email_obj.put()
+
 
 @app.post("/email-address/")
-async def set_email(content: EmailWrapper):
-    update_email(content)
-
-    return content
+async def set_email(content: EmailWrapper, response: Response):
+    # Wrap content and response in dictionary because ndb.transactional needs one argument.
+    update_email({"content": content, "response": response})

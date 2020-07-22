@@ -149,14 +149,19 @@ def test_email_address_new(monkeypatch):
         "email": "some@email.example"
     }
 
-    def put(udata):
-        assert udata == UserEmail(api_key=data["api_key"], email=data["email"])
+    def put(obj):
+        assert obj == UserEmail(api_key=data["api_key"], email=data["email"])
     
     monkeypatch.setattr(UserEmail, 'put', put)
+
+    def get_by_id(obj):
+        return None
+
+    monkeypatch.setattr(UserEmail, 'get_by_id', get_by_id)
 
     r = client.post(
         '/email-address/',
         json=data
     )
 
-    assert r.status_code == 200
+    assert r.status_code == 201
