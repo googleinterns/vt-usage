@@ -22,9 +22,9 @@ async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = 
     return data
 
 
-@app.post("/email-address/")
-async def set_email(content: EmailWrapper):
-    with client.transaction():
+@ndb.transactional
+def update_email(content: EmailWrapper):
+    with client.context():
         q = UserEmail.query(api_key=content.api_key)
         q_result = list(q.fetch())
         if len(q_result) > 1:
@@ -38,5 +38,9 @@ async def set_email(content: EmailWrapper):
             obj = q_result[0]
         
         obj.put()
+
+@app.post("/email-address/")
+async def set_email(content: EmailWrapper):
+    update_email(content)
 
     return content
