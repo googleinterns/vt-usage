@@ -46,5 +46,5 @@ class EmailWrapper(BaseModel):
 
 
 class UserEmail(ndb.Model):
-    api_key: ndb.KeyProperty(indexed=True)
-    email: ndb.StringProperty
+    api_key = ndb.KeyProperty()
+    email = ndb.StringProperty()

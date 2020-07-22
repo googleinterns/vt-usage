@@ -22,13 +22,12 @@ async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = 
     return data
 
 
-@ndb.transactional
+# @ndb.transactional
 def update_email(dict: Dict):
-    raise "whatever"
     content = dict["content"]
     response = dict["response"]
     with client.context():
-        email_obj = UserEmail.get_by_id(content)
+        email_obj = UserEmail.query(UserEmail.api_key == content.api_key).get()
         if email_obj is None:
             email_obj = UserEmail(api_key=content.api_key, email=content.email)
             response.status_code = status.HTTP_201_CREATED
@@ -41,5 +40,6 @@ def update_email(dict: Dict):
 
 @app.post("/email-address/")
 async def set_email(content: EmailWrapper, response: Response):
+
     # Wrap content and response in dictionary because ndb.transactional needs one argument.
     update_email({"content": content, "response": response})
