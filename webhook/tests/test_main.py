@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
+from google.cloud import ndb
 from main import app
 from models import UserEmail
 
@@ -149,15 +149,15 @@ def test_email_address_new(monkeypatch):
         "email": "some@email.example"
     }
 
-    def put(obj):
-        assert obj == UserEmail(api_key=data["api_key"], email=data["email"])
+    def put(self):
+        assert self == UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]), email=data["email"])
     
     monkeypatch.setattr(UserEmail, 'put', put)
 
-    def get_by_id(obj):
+    def get(self):
         return None
 
-    monkeypatch.setattr(UserEmail, 'get_by_id', get_by_id)
+    monkeypatch.setattr(ndb.Key, 'get', get)
 
     r = client.post(
         '/email-address/',

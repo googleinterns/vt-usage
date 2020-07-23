@@ -27,9 +27,9 @@ def update_email(dict: Dict):
     content = dict["content"]
     response = dict["response"]
     with client.context():
-        email_obj = UserEmail.query(UserEmail.api_key == content.api_key).get()
+        email_obj = ndb.Key("UserEmail", content.api_key).get()
         if email_obj is None:
-            email_obj = UserEmail(api_key=content.api_key, email=content.email)
+            email_obj = UserEmail(api_key=ndb.Key("UserEmail", content.api_key), email=content.email)
             response.status_code = status.HTTP_201_CREATED
         else:
             email_obj.email = content.email
