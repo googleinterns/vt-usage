@@ -21,25 +21,20 @@ async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = 
 
     return data
 
-#@ndb.transactional()
-def update_email(dict: Dict):
-    content = dict["content"]
-    response = dict["response"]
-
-    email_obj = ndb.Key("UserEmail", content.api_key).get()
-    if email_obj is None:
-        email_obj = UserEmail(api_key=ndb.Key(
-            "UserEmail", content.api_key), email=content.email)
-        response.status_code = status.HTTP_201_CREATED
-    else:
-        email_obj.email = content.email
-        response.status_code = status.HTTP_200_OK
-
-    email_obj.put()
-    
 
 @app.post("/email-address/")
 async def set_email(content: EmailWrapper, response: Response):
-    # Wrap content and response in dictionary because ndb.transactional needs one argument.
+    def update_email(content: EmailWrapper, response: Response):
+        email_obj = ndb.Key("UserEmail", content.api_key).get()
+        if email_obj is None:
+            email_obj = UserEmail(api_key=ndb.Key(
+                "UserEmail", content.api_key), email=content.email)
+            response.status_code = status.HTTP_201_CREATED
+        else:
+            email_obj.email = content.email
+            response.status_code = status.HTTP_200_OK
+
+        email_obj.put()
+
     with client.context():
-        update_email({"content": content, "response": response})
+        ndb.transaction(lambda: update_email(content, response))
