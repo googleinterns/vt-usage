@@ -164,7 +164,7 @@ def test_email_address_new(monkeypatch):
         '/email-address/',
         json=data
     )
-
+    print(r.text)
     assert r.status_code == 201
 
 
@@ -190,5 +190,5 @@ def test_email_address_update(monkeypatch):
         '/email-address/',
         json=data
     )
-
+    print(r.text)
     assert r.status_code == 200
