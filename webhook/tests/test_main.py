@@ -150,8 +150,9 @@ def test_email_address_new(monkeypatch):
     }
 
     def put(self):
-        assert self == UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]), email=data["email"])
-    
+        assert self == UserEmail(api_key=ndb.Key(
+            "UserEmail", data["api_key"]), email=data["email"])
+
     monkeypatch.setattr(UserEmail, 'put', put)
 
     def get(self):
@@ -165,3 +166,29 @@ def test_email_address_new(monkeypatch):
     )
 
     assert r.status_code == 201
+
+
+def test_email_address_update(monkeypatch):
+    data = {
+        "api_key": "abcabc",
+        "email": "some@email.example"
+    }
+
+    def put(self):
+        assert self == UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]),
+                                 email=data["email"])
+
+    monkeypatch.setattr(UserEmail, 'put', put)
+
+    def get(self):
+        return UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]),
+                         email="random@email.example")
+
+    monkeypatch.setattr(ndb.Key, 'get', get)
+
+    r = client.post(
+        '/email-address/',
+        json=data
+    )
+
+    assert r.status_code == 200
