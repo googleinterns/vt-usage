@@ -7,10 +7,10 @@ import re
 
 
 class VTType(str, Enum):
-    file = 'file'
-    url = 'url'
-    domain = 'domain'
-    ip_address = 'ip_address'
+    file = "file"
+    url = "url"
+    domain = "domain"
+    ip_address = "ip_address"
 
 
 class VTData(BaseModel):
@@ -38,7 +38,7 @@ class EmailWrapper(BaseModel):
 
     @validator("email")
     def email_validator(cls, v):
-        regex = '^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$'
+        regex = "^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$"
 
         if not re.search(regex, v):
             raise ValueError("Email address is not valid!")

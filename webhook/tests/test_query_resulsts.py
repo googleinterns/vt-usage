@@ -6,10 +6,12 @@ from main import app
 correct_headers = {"X-Appengine-Inbound-Appid": "virustotal-step-2020"}
 client = TestClient(app)
 
+URL = "/query-results/"
+
 
 def test_query_results_empty_list():
     r = client.post(
-        '/query-results/',
+        URL,
         headers=correct_headers,
         json={"data": [], "links": {}, "meta": {}})
 
@@ -23,7 +25,7 @@ def test_query_results_empty_list():
 def test_query_results_normal_request():
     type_list = ["file", "url", "domain", "ip_address"]
     r = client.post(
-        '/query-results/',
+        URL,
         headers=correct_headers,
         json={
             "data": [{
@@ -47,7 +49,7 @@ def test_query_results_normal_request():
 
 def test_query_results_bad_type():
     r = client.post(
-        '/query-results/',
+        URL,
         headers=correct_headers,
         json={
             "data": [{
@@ -75,7 +77,7 @@ def test_query_results_links_and_meta():
     }
 
     r = client.post(
-        '/query-results/',
+        URL,
         headers=correct_headers,
         json={"data": [], "links": links, "meta": meta})
 
@@ -88,7 +90,7 @@ def test_query_results_links_and_meta():
 
 def test_query_results_wrong_headers():
     r = client.post(
-        '/query-results/',
+        URL,
         headers={},
         json={"data": [], "links": {}, "meta": {}})
 
@@ -123,7 +125,7 @@ def test_query_results_missing_field_in_data():
 
     for key in obj.keys():
         r = client.post(
-            '/query-results/',
+            URL,
             headers=correct_headers,
             json={
                 "data": [obj.copy().pop(key)],

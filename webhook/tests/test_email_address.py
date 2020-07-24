@@ -1,7 +1,22 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from google.cloud import ndb
+from main import app
 from models import UserEmail
+
+import pytest
+
+client = TestClient(app)
+
+URL = "/email-address/"
+
+
+@pytest.fixture(autouse=True)
+def patch_transaction(monkeypatch):
+    def transaction(func):
+        func()
+
+    monkeypatch.setattr(ndb, 'transaction', transaction)
 
 
 def test_email_address_new(monkeypatch):
@@ -14,27 +29,15 @@ def test_email_address_new(monkeypatch):
         assert self == UserEmail(api_key=ndb.Key(
             "UserEmail", data["api_key"]), email=data["email"])
 
-    monkeypatch.setattr(UserEmail, 'put', put)
+    monkeypatch.setattr(UserEmail, "put", put)
 
     def get(self):
         return None
 
-    monkeypatch.setattr(ndb.Key, 'get', get)
+    monkeypatch.setattr(ndb.Key, "get", get)
 
-    def transaction(func):
-        func()
+    r = client.post(URL, json=data)
 
-    monkeypatch.setattr(ndb, 'transaction', transaction)
-
-    from main import app
-
-    client = TestClient(app)
-
-    r = client.post(
-        '/email-address/',
-        json=data
-    )
-    print(r.text)
     assert r.status_code == 201
 
 
@@ -48,26 +51,14 @@ def test_email_address_update(monkeypatch):
         assert self == UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]),
                                  email=data["email"])
 
-    monkeypatch.setattr(UserEmail, 'put', put)
+    monkeypatch.setattr(UserEmail, "put", put)
 
     def get(self):
         return UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]),
                          email="random@email.example")
 
-    monkeypatch.setattr(ndb.Key, 'get', get)
+    monkeypatch.setattr(ndb.Key, "get", get)
 
-    def transaction(func):
-        func()
+    r = client.post(URL, json=data)
 
-    monkeypatch.setattr(ndb, 'transaction', transaction)
-
-    from main import app
-
-    client = TestClient(app)
-
-    r = client.post(
-        '/email-address/',
-        json=data
-    )
-    print(r.text)
     assert r.status_code == 200

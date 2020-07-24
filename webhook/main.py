@@ -14,7 +14,8 @@ async def root():
 
 
 @app.post("/query-results/")
-async def query_results(data: VTAPI, x_appengine_inbound_appid: Optional[str] = Header(None)):
+async def send_query_results(data: VTAPI,
+                             x_appengine_inbound_appid: Optional[str] = Header(None)):
     if x_appengine_inbound_appid != 'virustotal-step-2020':
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
