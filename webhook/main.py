@@ -22,14 +22,11 @@ async def send_query_results(data: VTAPI,
             status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
     return data
-    # mail.send_mail(sender='no-reply@virustotal-step-2020.appspotmail.com',
-    #                to='user@example.com',
-    #                subject='App Engine Mail API Test',
-    #                body='Please do not reply.')
 
 
 @app.post("/email-address/")
 async def set_email(response: Response, content: APIKeyEmail):
+    # TODO Check why documentation is not generating correct response code_status.
     def update_email(api_key: str, email: str, response: Response):
         email_obj = ndb.Key("UserEmail", api_key).get()
         if email_obj is None:
