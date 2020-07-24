@@ -38,9 +38,9 @@ class EmailWrapper(BaseModel):
 
     @validator("email")
     def email_validator(cls, v):
-        regex = "^[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$"
+        regex = "[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$"
 
-        if not re.search(regex, v):
+        if not re.match(regex, v):
             raise ValueError("Email address is not valid!")
         return v
 
