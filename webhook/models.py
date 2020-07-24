@@ -26,15 +26,18 @@ class VTAPI(BaseModel):
     meta: Dict
 
 
-class EmailWrapper(BaseModel):
+class APIKey(BaseModel):
     api_key: str
-    email: str
 
     @validator("api_key")
     def api_key_validator(cls, v):
         if not v.isalnum():
             raise ValueError("API key must be alphanumeric!")
         return v
+
+
+class APIKeyEmail(APIKey):
+    email: str
 
     @validator("email")
     def email_validator(cls, v):

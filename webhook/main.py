@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Header, HTTPException, status, Response
+from fastapi import FastAPI, Header, HTTPException, status, Response, Body
 from google.cloud import ndb
+
 from typing import Optional, Dict
 
-from models import VTAPI, EmailWrapper, UserEmail
+from models import VTAPI, APIKey, APIKeyEmail, UserEmail
 
 app = FastAPI()
 client = ndb.Client()
@@ -21,21 +22,32 @@ async def send_query_results(data: VTAPI,
             status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
     return data
+    # mail.send_mail(sender='no-reply@virustotal-step-2020.appspotmail.com',
+    #                to='user@example.com',
+    #                subject='App Engine Mail API Test',
+    #                body='Please do not reply.')
 
 
 @app.post("/email-address/")
-async def set_email(content: EmailWrapper, response: Response):
-    def update_email(content: EmailWrapper, response: Response):
-        email_obj = ndb.Key("UserEmail", content.api_key).get()
+async def set_email(response: Response, content: APIKeyEmail):
+    def update_email(api_key: str, email: str, response: Response):
+        email_obj = ndb.Key("UserEmail", api_key).get()
         if email_obj is None:
             email_obj = UserEmail(api_key=ndb.Key(
-                "UserEmail", content.api_key), email=content.email)
+                "UserEmail", api_key), email=email)
             response.status_code = status.HTTP_201_CREATED
         else:
-            email_obj.email = content.email
+            email_obj.email = email
             response.status_code = status.HTTP_200_OK
 
         email_obj.put()
 
     with client.context():
-        ndb.transaction(lambda: update_email(content, response))
+        ndb.transaction(lambda: update_email(
+            content.api_key, content.email, response))
+
+
+@app.delete("/email-address/")
+async def delete_email(api_key: APIKey):
+    with client.context():
+        ndb.Key("UserEmail", api_key.api_key).delete()

@@ -38,6 +38,7 @@ def test_email_address_new(monkeypatch):
 
     r = client.post(URL, json=data)
 
+
     assert r.status_code == 201
 
 
@@ -60,5 +61,20 @@ def test_email_address_update(monkeypatch):
     monkeypatch.setattr(ndb.Key, "get", get)
 
     r = client.post(URL, json=data)
+
+    assert r.status_code == 200
+
+
+def test_email_address_delete(monkeypatch):
+    data = {
+        "api_key": "abcabc"
+    }
+
+    def delete(self):
+        assert self == ndb.Key("UserEmail", data["api_key"])
+    
+    monkeypatch.setattr(ndb.Key, "delete", delete)
+
+    r = client.delete(URL, json=data)
 
     assert r.status_code == 200
