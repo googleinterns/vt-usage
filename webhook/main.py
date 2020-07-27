@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Header, HTTPException, status, Response, Body
 from google.cloud import ndb
-
 from typing import Optional, Dict
 
 from models import VTAPI, APIKey, APIKeyEmail, UserEmail
+
+import smtplib
 
 app = FastAPI()
 client = ndb.Client()
@@ -15,13 +16,19 @@ async def root():
 
 
 @app.post("/query-results/")
-async def send_query_results(data: VTAPI,
+async def send_query_results(request: VTAPI,
                              x_appengine_inbound_appid: Optional[str] = Header(None)):
     if x_appengine_inbound_appid != 'virustotal-step-2020':
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
-    return data
+    email = None
+    with client.context():
+        email = ndb.Key("UserEmail", request.api_key).get()
+
+    if email is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="API Key is not valid")
 
 
 @app.post("/email-address/")

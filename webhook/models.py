@@ -20,12 +20,6 @@ class VTData(BaseModel):
     type: VTType
 
 
-class VTAPI(BaseModel):
-    data: List[VTData]
-    links: Dict
-    meta: Dict
-
-
 class APIKey(BaseModel):
     api_key: str
 
@@ -34,6 +28,12 @@ class APIKey(BaseModel):
         if not v.isalnum():
             raise ValueError("API key must be alphanumeric!")
         return v
+
+
+class VTAPI(APIKey):
+    data: List[VTData]
+    links: Dict
+    meta: Dict
 
 
 class APIKeyEmail(APIKey):
