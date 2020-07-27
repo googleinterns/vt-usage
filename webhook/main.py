@@ -1,13 +1,19 @@
 from fastapi import FastAPI, Header, HTTPException, status, Response, Body
-from google.cloud import ndb
+from fastapi.encoders import jsonable_encoder
+from google.cloud import logging, ndb
 from typing import Optional, Dict
 
 from models import VTAPI, APIKey, APIKeyEmail, UserEmail
 
-import smtplib
+import json
+import logging as log
 
 app = FastAPI()
 client = ndb.Client()
+
+logger = logging.Client()
+logger.get_default_handler()
+logger.setup_logging()
 
 
 @app.get("/")
@@ -29,6 +35,8 @@ async def send_query_results(request: VTAPI,
     if email is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="API Key is not valid")
+    
+    log.info("Send an email to %s.\nBody:\n%s".format(email, json.dumps(jsonable_encoder(request.data))))
 
 
 @app.post("/email-address/")
