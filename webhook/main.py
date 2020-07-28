@@ -11,9 +11,14 @@ import logging as log
 app = FastAPI()
 client = ndb.Client()
 
-logger = logging.Client()
-logger.get_default_handler()
-logger.setup_logging()
+
+def setup_cloud_logging():
+    logger = logging.Client()
+    logger.get_default_handler()
+    logger.setup_logging()
+
+
+setup_cloud_logging()
 
 
 @app.get("/")
@@ -35,12 +40,13 @@ async def send_query_results(request: VTAPI,
     if email is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="API Key is not valid")
-    
-    log.info("Send an email to %s.\nBody:\n%s".format(email, json.dumps(jsonable_encoder(request.data))))
+
+    log.info("Send an email to {}.\nBody:\n{}".format(
+        email, json.dumps(jsonable_encoder(request.data))))
 
 
 @app.post("/email-address/")
-async def set_email(response: Response, content: APIKeyEmail):
+async def set_email(content: APIKeyEmail, response: Response={201: {}}):
     # TODO Check why documentation is not generating correct response code_status.
     def update_email(api_key: str, email: str, response: Response):
         email_obj = ndb.Key("UserEmail", api_key).get()
