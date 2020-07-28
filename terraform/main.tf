@@ -9,12 +9,12 @@ provider "google" {
 }
 
 resource "google_compute_network" "vpc_network" {
-  name = "terraform-network"
+  name = "wazuh-network"
 }
 
 
-resource "google_compute_instance" "vm_instance_1" {
-  name         = "terraform-instance-1"
+resource "google_compute_instance" "wazuh_agent" {
+  name         = "wazuh-agent-instance"
   machine_type = "e2-standard-2"
 
   tags = ["allow-inbound"]
@@ -38,8 +38,8 @@ resource "google_compute_instance" "vm_instance_1" {
   can_ip_forward = true
 }
 
-resource "google_compute_instance" "vm_instance_2" {
-  name         = "terraform-instance-2"
+resource "google_compute_instance" "wazuh_manager" {
+  name         = "wazuh-manager-instance"
   machine_type = "e2-standard-2"
 
   tags = ["server"]
@@ -59,8 +59,8 @@ resource "google_compute_instance" "vm_instance_2" {
   }
 }
 
-resource "google_compute_instance" "vm_instance_3" {
-  name         = "terraform-instance-3"
+resource "google_compute_instance" "elastic_stack" {
+  name         = "elastic-stack-instance"
   machine_type = "e2-standard-2"
 
   tags = ["server"]
@@ -85,8 +85,8 @@ resource "google_compute_route" "internet_access" {
   description = "Route to internet for private instances"
   dest_range = "0.0.0.0/0"
   network = google_compute_network.vpc_network.self_link
-  next_hop_instance = google_compute_instance.vm_instance_1.self_link
-  next_hop_instance_zone = google_compute_instance.vm_instance_1.zone
+  next_hop_instance = google_compute_instance.wazuh_agent.self_link
+  next_hop_instance_zone = google_compute_instance.wazuh_agent.zone
   tags = ["server"]
   priority = 100
 }
