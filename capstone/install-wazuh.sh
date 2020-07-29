@@ -11,7 +11,7 @@ apt-get install curl apt-transport-https lsb-release gnupg2
 curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
 
 # Add the repository.
-echo "deb https://packages.wazuh.com/3.x/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
+echo "deb https://packages-dev.wazuh.com/staging/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
 
 # Update package information.
 apt-get update
@@ -24,12 +24,9 @@ apt-get install wazuh-manager
 curl -sL https://deb.nodesource.com/setup_10.x | bash -
 apt-get install nodejs
 
+
 # Install Wazuh API.
 apt-get install wazuh-api
-
-# Disable auto-updates.
-sed -i "s/^deb/#deb/" /etc/apt/sources.list.d/wazuh.list
-apt-get update
 
 
 # Add the Elastic repository and its GPG key.
@@ -37,6 +34,7 @@ apt-get install curl apt-transport-https
 curl -s https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
 echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | tee /etc/apt/sources.list.d/elastic-7.x.list
 apt-get update
+
 
 # Install Filebeat.
 apt-get install filebeat=7.8.1
