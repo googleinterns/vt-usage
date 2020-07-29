@@ -18,7 +18,8 @@ def test_bad_api_key(api_key):
     assert False
 
 
-@pytest.mark.parametrize("email", ["good@email.com", "strange@domain.sufix", "with.dot@address.com"])
+@pytest.mark.parametrize("email", ["good@email.com", "strange@domain.sufix", "with.dot@address.com",
+                                   "with-dash@add.com", "with.two.dots@address.com"])
 def test_api_key_email(email):
     assert APIKeyEmail(api_key="abc123", email=email).email == email
 

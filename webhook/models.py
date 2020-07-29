@@ -41,7 +41,7 @@ class APIKeyEmail(APIKey):
 
     @validator("email")
     def email_validator(cls, v):
-        regex = "[a-z0-9]+[\._]?[a-z0-9]+[@]\w+[.]\w+$"
+        regex = "[a-z0-9\.\-]+[@]\w+[.]\w+$"
 
         if not re.match(regex, v):
             raise ValueError("Email address is not valid!")
