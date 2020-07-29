@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Fail if any command fails.
+set -e
+
 # Install needed packages.
 apt-get update
 apt-get install curl apt-transport-https lsb-release gnupg2
