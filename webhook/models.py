@@ -49,5 +49,4 @@ class APIKeyEmail(APIKey):
 
 
 class UserEmail(ndb.Model):
-    api_key = ndb.KeyProperty()
     email = ndb.StringProperty()
