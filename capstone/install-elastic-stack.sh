@@ -32,6 +32,3 @@ fi
 systemctl daemon-reload
 systemctl enable elasticsearch.service
 systemctl start elasticsearch.service
-
-echo "Now you should run following line where Filebeat was installed!"
-echo "filebeat setup --index-management -E setup.template.json.enabled=false"
