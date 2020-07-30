@@ -35,24 +35,25 @@ async def send_query_results(request: VTAPI,
 
     email = None
     with client.context():
-        email = ndb.Key("UserEmail", request.api_key).get()
+        email_row = ndb.Key("UserEmail", request.api_key).get()
 
-    if email is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="API Key is not valid")
+        if email_row is None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN, detail="API Key is not valid")
+        else:
+            email = email_row.email
 
     log.info("Send an email to {}.\nBody:\n{}".format(
         email, json.dumps(jsonable_encoder(request.data))))
 
 
 @app.post("/email-address/")
-async def set_email(content: APIKeyEmail, response: Response={201: {}}):
+async def set_email(content: APIKeyEmail, response: Response):
     # TODO Check why documentation is not generating correct response code_status.
     def update_email(api_key: str, email: str, response: Response):
         email_obj = ndb.Key("UserEmail", api_key).get()
         if email_obj is None:
-            email_obj = UserEmail(api_key=ndb.Key(
-                "UserEmail", api_key), email=email)
+            email_obj = UserEmail(id=api_key, email=email)
             response.status_code = status.HTTP_201_CREATED
         else:
             email_obj.email = email

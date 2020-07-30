@@ -26,8 +26,7 @@ def test_email_address_new(monkeypatch):
     }
 
     def put(self):
-        assert self == UserEmail(api_key=ndb.Key(
-            "UserEmail", data["api_key"]), email=data["email"])
+        assert self == UserEmail(id=data["api_key"], email=data["email"])
 
     monkeypatch.setattr(UserEmail, "put", put)
 
@@ -48,13 +47,13 @@ def test_email_address_update(monkeypatch):
     }
 
     def put(self):
-        assert self == UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]),
+        assert self == UserEmail(id=data["api_key"],
                                  email=data["email"])
 
     monkeypatch.setattr(UserEmail, "put", put)
 
     def get(self):
-        return UserEmail(api_key=ndb.Key("UserEmail", data["api_key"]),
+        return UserEmail(id=data["api_key"],
                          email="random@email.example")
 
     monkeypatch.setattr(ndb.Key, "get", get)

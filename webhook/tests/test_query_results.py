@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from main import app
+from models import UserEmail
 from google.cloud import ndb
 
 import pytest
@@ -15,7 +16,7 @@ API_KEY = "abc123"
 @pytest.fixture
 def patch_key_get_default_email(monkeypatch):
     def get(self):
-        return "sample@email.address"
+        return UserEmail(id="123abc", email="sample@email.address")
 
     monkeypatch.setattr(ndb.Key, 'get', get)
 
