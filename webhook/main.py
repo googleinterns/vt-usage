@@ -48,7 +48,7 @@ async def send_query_results(request: VTAPI,
 
 
 @app.post("/email-address/")
-async def set_email(content: APIKeyEmail, response: Response = {201: {}}):
+async def set_email(content: APIKeyEmail, response: Response):
     # TODO Check why documentation is not generating correct response code_status.
     def update_email(api_key: str, email: str, response: Response):
         email_obj = ndb.Key("UserEmail", api_key).get()
