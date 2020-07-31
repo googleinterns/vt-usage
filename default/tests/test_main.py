@@ -80,12 +80,15 @@ def test_wrong_userdata():
 @patch('models.Userdata.query', return_value=[models.Userdata(apikey='test_apikey', webhook='test_webhook', vt_query='test_vt_query')])
 @asyncpatch('aiohttp.ClientSession.get')
 @asyncpatch('aiohttp.ClientSession.post')
-def test_run_queries(mock_q, mock_get, mock_post):
+def test_run_queries(mock_post, mock_get, mock_q):
     test_vt_data = {'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}}
 
     mock_get.return_value.__aenter__.return_value.json = CoroutineMock()
     mock_get.return_value.__aenter__.return_value.status = 200
     mock_get.return_value.__aenter__.return_value.json.return_value = test_vt_data
+    mock_post.return_value.__aenter__.return_value.text = CoroutineMock()
+    mock_post.return_value.__aenter__.return_value.status = 200
+    mock_post.return_value.__aenter__.return_value.text.return_value = "resp_text"
 
     response = client.get(
         '/run_queries/',
@@ -96,7 +99,8 @@ def test_run_queries(mock_q, mock_get, mock_post):
     assert response.text == '"Success"'
     models.Userdata.query.assert_called_once()
     aiohttp.ClientSession.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers={'x-apikey': 'test_apikey'}, ssl=ANY)
-    aiohttp.ClientSession.post.assert_called_once_with('test_webhook', data=test_vt_data)
+    aiohttp.ClientSession.post.assert_called_once_with('test_webhook', json=test_vt_data, ssl=ANY)
+
 
 
 def test_bad_run_queries():

@@ -51,8 +51,14 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         ssl=ssl_context
                     ) as resp:
                     json = await resp.json()
+                    json['api_key'] = user.apikey
                     if resp.status != 200:
                         logging.error(resp.text())
                         raise HTTPException(400, 'Bad request')
-                    httpSession.post(user.webhook, data=json)
+                    async with httpSession.post(user.webhook, json=json, ssl=ssl_context) as post:
+                        post_response = await post.text()
+                        if post.status != 200:
+                            error_msg = 'Post to webhook failed with {}: {}'.format(post.status, post_response)
+                            logging.error(error_msg)
+                            raise HTTPException(400, 'Bad request')
         return 'Success'
