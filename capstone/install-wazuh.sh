@@ -20,15 +20,6 @@ apt-get update
 apt-get install wazuh-manager
 
 
-# Install NodeJS.
-curl -sL https://deb.nodesource.com/setup_10.x | bash -
-apt-get install nodejs
-
-
-# Install Wazuh API.
-apt-get install wazuh-api
-
-
 # Add the Elastic repository and its GPG key.
 apt-get install curl apt-transport-https
 curl -s https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
@@ -43,7 +34,7 @@ apt-get install filebeat=7.8.1
 curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v3.13.1/extensions/filebeat/7.x/filebeat.yml
 
 # Download the alerts template for Elasticsearch.
-curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/wazuh/wazuh/v3.13.1/extensions/elasticsearch/7.x/wazuh-template.json
+curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/wazuh/wazuh/master/extensions/elasticsearch/7.x/wazuh-template.json
 
 # Download the Wazuh module for Filebeat.
 curl -s https://packages.wazuh.com/3.x/filebeat/wazuh-filebeat-0.1.tar.gz | sudo tar -xvz -C /usr/share/filebeat/module

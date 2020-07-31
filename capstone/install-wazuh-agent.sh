@@ -10,7 +10,7 @@ apt-get install curl apt-transport-https lsb-release gnupg2
 curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
 
 # Add the repository.
-echo "deb https://packages.wazuh.com/3.x/apt/ stable main" | tee /etc/apt/sources.list.d/wazuh.list
+echo "deb  https://packages-dev.wazuh.com/staging/apt/ stable main" | tee /etc/apt/sources.list.d/wazuh.list
 
 # Update the package information.
 apt-get update
