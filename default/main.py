@@ -47,7 +47,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
             async with aiohttp.ClientSession() as httpSession:
                 async with httpSession.get(
                         'https://www.virustotal.com/api/v3/intelligence/search?query={query}'.format(query=user.vt_query),
-                        headers={'x-apikey': user.apikey, 'X-Appengine-Inbound-Appid': 'virustotal-step-2020'},
+                        headers={'x-apikey': user.apikey},
                         ssl=ssl_context
                     ) as resp:
                     json = await resp.json()
@@ -55,7 +55,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                     if resp.status != 200:
                         logging.error(resp.text())
                         raise HTTPException(400, 'Bad request')
-                    async with httpSession.post(user.webhook, json=json, ssl=ssl_context) as post:
+                    async with httpSession.post(user.webhook, json=json, ssl=ssl_context, headers={'X-Appengine-Inbound-Appid': 'virustotal-step-2020'}) as post:
                         post_response = await post.text()
                         if post.status != 200:
                             error_msg = 'Post to webhook failed with {}: {}'.format(post.status, post_response)
