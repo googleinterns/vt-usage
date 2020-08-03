@@ -13,19 +13,19 @@ apt-get -y update
 apt-get -y install elasticsearch=7.8.1
 
 # Bind Elastic to IP.
-sed -e "s/#network.host:*/network.host: \"elastic-stack-instance\"/g" /etc/elasticsearch/elasticsearch.yml
+sed "s/#network.host:.*/network.host: \"elastic-stack-instance\"/" /etc/elasticsearch/elasticsearch.yml
 
 # Create or uncomment node.
-if grep -Fxq "#node.name:" /etc/elasticsearch/elasticsearch.yml; then
-    sed -e "s/#node.name:*/node.name: \"Capstone\"/g" /etc/elasticsearch/elasticsearch.yml
-else
+if [ grep -Fxq "#node.name:" /etc/elasticsearch/elasticsearch.yml -eq 0 ]; then
     echo "node.name: \"Capstone\"" >> /etc/elasticsearch/elasticsearch.yml
+else
+    sed -e "s/#node.name:.*/node.name: \"Capstone\"/" /etc/elasticsearch/elasticsearch.yml
 fi
 
-if grep -Fxq "#cluster.initial_master_nodes" /etc/elasticsearch/elasticsearch.yml; then
-    sed -e "s/#cluster.initial_master_nodes:*/cluster.initial_master_nodes: [\"Capstone\"]/g" /etc/elasticsearch/elasticsearch.yml
-else
+if [ grep -Fxq "#cluster.initial_master_nodes" /etc/elasticsearch/elasticsearch.yml -eq 0 ]; then
     echo "cluster.initial_master_nodes: [\"Capstone\"]" >> /etc/elasticsearch/elasticsearch.yml
+else
+    sed "s/#cluster.initial_master_nodes:*/cluster.initial_master_nodes: [\"Capstone\"]/" /etc/elasticsearch/elasticsearch.yml
 fi
 
 # Start Elasticsearch service
