@@ -11,7 +11,7 @@ apt-get install python gcc make libc6-dev curl policycoreutils automake autoconf
 git clone https://github.com/wazuh/wazuh.git
 
 # Copy wazuh.conf
-cp wazuh.conf etc/preloaded-vars.conf
+cp wazuh.conf wazuh/etc/preloaded-vars.conf
 
 # Install Wazuh.
 printf "\n" | (cd wazuh && ./install.sh)
@@ -37,7 +37,7 @@ curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/waz
 curl -s https://packages.wazuh.com/3.x/filebeat/wazuh-filebeat-0.1.tar.gz | sudo tar -xvz -C /usr/share/filebeat/module
 
 # Set elastic server ip.
-sed "s/YOUR_ELASTIC_SERVER_IP/elastic-stack-instance" /etc/filebeat/filebeat.yml
+sed "s/YOUR_ELASTIC_SERVER_IP/elastic-stack-instance/g" /etc/filebeat/filebeat.yml
 
 # Enable Filebit service.
 systemctl daemon-reload
