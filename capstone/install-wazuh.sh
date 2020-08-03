@@ -5,13 +5,16 @@ set -e
 
 # Install needed packages.
 apt-get update
-apt-get install python gcc make libc6-dev curl policycoreutils automake autoconf libtool git
+apt-get install python gcc make libc6-dev curl policycoreutils automake autoconf libtool git # Todo add auto-accept
 
 # Clone repository.
 git clone https://github.com/wazuh/wazuh.git
 
+# Copy wazuh.conf
+cp wazuh.conf etc/preloaded-vars.conf
+
 # Install Wazuh.
-echo "manager" | (cd wazuh-* && ./install.sh)
+printf "\n" | (cd wazuh && ./install.sh)
 
 
 # Add the Elastic repository and its GPG key.
