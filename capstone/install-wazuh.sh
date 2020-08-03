@@ -5,19 +5,13 @@ set -e
 
 # Install needed packages.
 apt-get update
-apt-get install curl apt-transport-https lsb-release gnupg2
+apt-get install python gcc make libc6-dev curl policycoreutils automake autoconf libtool git
 
-# Install GPG key.
-curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
+# Clone repository.
+git clone https://github.com/wazuh/wazuh.git
 
-# Add the repository.
-echo "deb https://packages-dev.wazuh.com/staging/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
-
-# Update package information.
-apt-get update
-
-# Install the Wazuh manager.
-apt-get install wazuh-manager
+# Install Wazuh.
+echo "manager" | (cd wazuh-* && ./install.sh)
 
 
 # Add the Elastic repository and its GPG key.
