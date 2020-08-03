@@ -13,7 +13,7 @@ apt-get update
 apt-get install elasticsearch=7.8.1
 
 # Bind Elastic to IP.
-sed "s/#network.host:*/network.host: \"elastic-stack-instance\/g"" /etc/elasticsearch/elasticsearch.yml
+sed "s/#network.host:*/network.host: \"elastic-stack-instance\"/g" /etc/elasticsearch/elasticsearch.yml
 
 # Create or uncomment node.
 if grep -Fxq "#node.name:" /etc/elasticsearch/elasticsearch.yml; then
