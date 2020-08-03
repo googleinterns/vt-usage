@@ -47,7 +47,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
             async with aiohttp.ClientSession() as httpSession:
                 async with httpSession.get(
                         'https://www.virustotal.com/api/v3/intelligence/search?query={query}'.format(query=user.vt_query),
-                        headers={'x-apikey': user.apikey},
+                        headers={'x-apikey': user.apikey, 'X-Appengine-Inbound-Appid': 'virustotal-step-2020'},
                         ssl=ssl_context
                     ) as resp:
                     json = await resp.json()
