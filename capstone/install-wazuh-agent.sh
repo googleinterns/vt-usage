@@ -14,7 +14,7 @@ git clone https://github.com/wazuh/wazuh.git
 cp wazuh.conf wazuh/etc/preloaded-vars.conf
 
 # Set install agent.
-echo "#USER_INSTALL_TYPE=\"agent\"" >> wazuh/etc/preloaded-vars.conf
+printf "\nUSER_INSTALL_TYPE=\"agent\"" >> wazuh/etc/preloaded-vars.conf
 
 # Install Wazuh.
 printf "\n" | (cd wazuh && ./install.sh)
