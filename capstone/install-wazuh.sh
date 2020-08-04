@@ -10,8 +10,11 @@ apt-get -y install python gcc make libc6-dev curl policycoreutils automake autoc
 # Clone repository.
 git clone https://github.com/wazuh/wazuh.git
 
-# Copy wazuh.conf
+# Copy wazuh.conf.
 cp wazuh.conf wazuh/etc/preloaded-vars.conf
+
+# Set install server.
+echo "#USER_INSTALL_TYPE=\"server\"" >> wazuh/etc/preloaded-vars.conf
 
 # Install Wazuh.
 printf "\n" | (cd wazuh && ./install.sh)

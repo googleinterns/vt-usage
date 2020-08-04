@@ -4,16 +4,20 @@
 set -e
 
 # Install needed packages.
-apt-get install curl apt-transport-https lsb-release gnupg2
+apt-get -y update
+apt-get -y install python gcc make libc6-dev curl policycoreutils automake autoconf libtool git
 
-# Install the Wazuh repository GPG key.
-curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
+# Clone Wazuh repository.
+git clone https://github.com/wazuh/wazuh.git
 
-# Add the repository.
-echo "deb  https://packages-dev.wazuh.com/staging/apt/ stable main" | tee /etc/apt/sources.list.d/wazuh.list
+# Copy wazuh.conf.
+cp wazuh.conf wazuh/etc/preloaded-vars.conf
 
-# Update the package information.
-apt-get update
+# Set install agent.
+echo "#USER_INSTALL_TYPE=\"agent\"" >> wazuh/etc/preloaded-vars.conf
+
+# Install Wazuh.
+printf "\n" | (cd wazuh && ./install.sh)
 
 # Install agent.
 WAZUH_MANAGER="wazuh-manager-instance" apt-get install wazuh-agent
