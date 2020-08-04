@@ -37,7 +37,7 @@ curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/waz
 curl -s https://packages.wazuh.com/3.x/filebeat/wazuh-filebeat-0.1.tar.gz | sudo tar -xvz -C /usr/share/filebeat/module
 
 # Set elastic server ip.
-sed "s/YOUR_ELASTIC_SERVER_IP/elastic-stack-instance/g" /etc/filebeat/filebeat.yml
+sed -i "s/YOUR_ELASTIC_SERVER_IP/elastic-stack-instance/g" /etc/filebeat/filebeat.yml
 
 # Enable Filebit service.
 systemctl daemon-reload
