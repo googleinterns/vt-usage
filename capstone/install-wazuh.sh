@@ -4,31 +4,31 @@
 set -e
 
 # Install needed packages.
-apt-get update
-apt-get install curl apt-transport-https lsb-release gnupg2
+apt-get -y update
+apt-get -y install python gcc make libc6-dev curl policycoreutils automake autoconf libtool git
 
-# Install GPG key.
-curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | apt-key add -
+# Clone repository.
+git clone https://github.com/wazuh/wazuh.git
 
-# Add the repository.
-echo "deb https://packages-dev.wazuh.com/staging/apt/ stable main" | tee -a /etc/apt/sources.list.d/wazuh.list
+# Copy wazuh.conf.
+cp wazuh.conf wazuh/etc/preloaded-vars.conf
 
-# Update package information.
-apt-get update
+# Set install server.
+printf "\nUSER_INSTALL_TYPE=\"server\"" >> wazuh/etc/preloaded-vars.conf
 
-# Install the Wazuh manager.
-apt-get install wazuh-manager
+# Install Wazuh.
+printf "\n" | (cd wazuh && ./install.sh)
 
 
 # Add the Elastic repository and its GPG key.
-apt-get install curl apt-transport-https
+apt-get -y install curl apt-transport-https
 curl -s https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -
 echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | tee /etc/apt/sources.list.d/elastic-7.x.list
 apt-get update
 
 
 # Install Filebeat.
-apt-get install filebeat=7.8.1
+apt-get -y install filebeat=7.8.1
 
 # Download the Filebeat config file from the Wazuh repository.
 curl -so /etc/filebeat/filebeat.yml https://raw.githubusercontent.com/wazuh/wazuh/v3.13.1/extensions/filebeat/7.x/filebeat.yml
@@ -40,7 +40,7 @@ curl -so /etc/filebeat/wazuh-template.json https://raw.githubusercontent.com/waz
 curl -s https://packages.wazuh.com/3.x/filebeat/wazuh-filebeat-0.1.tar.gz | sudo tar -xvz -C /usr/share/filebeat/module
 
 # Set elastic server ip.
-sed "s/YOUR_ELASTIC_SERVER_IP/elastic-stack-instance" /etc/filebeat/filebeat.yml
+sed -i "s/YOUR_ELASTIC_SERVER_IP/elastic-stack-instance/g" /etc/filebeat/filebeat.yml
 
 # Enable Filebit service.
 systemctl daemon-reload
