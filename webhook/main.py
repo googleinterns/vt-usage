@@ -1,12 +1,20 @@
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import ec, utils
 from fastapi import FastAPI, Header, HTTPException, status, Response, Body
 from fastapi.encoders import jsonable_encoder
-from google.cloud import logging, ndb
+from google.cloud import logging, ndb, kms
 from typing import Optional, Dict
 
 from models import VTAPI, APIKey, APIKeyEmail, UserEmail
 
+import base64
 import json
 import logging as log
+
+
+import hashlib
 
 app = FastAPI()
 client = ndb.Client()
@@ -26,10 +34,32 @@ async def root():
     return {"data": "Hello World"}
 
 
+def verify_asymmetric_ec(project_id, location_id, key_ring_id, key_id, version_id, message, signature):
+    message_bytes = message.encode('utf-8')
+    signature = base64.b64decode(signature.encode())
+
+    client = kms.KeyManagementServiceClient()
+
+    key_version_name = client.crypto_key_version_path(project_id, location_id, key_ring_id, key_id, version_id)
+
+    public_key = client.get_public_key(request={'name': key_version_name})
+
+    pem = public_key.pem.encode('utf-8')
+    ec_key = serialization.load_pem_public_key(pem, default_backend())
+    hash_ = hashlib.sha256(message_bytes).digest()
+
+    try:
+        sha256 = hashes.SHA256()
+        ec_key.verify(signature, hash_, ec.ECDSA(utils.Prehashed(sha256)))
+        return True
+    except InvalidSignature:
+        return False
+
+
 @app.post("/query-results/")
 async def send_query_results(request: VTAPI,
-                             x_appengine_inbound_appid: Optional[str] = Header(None)):
-    if x_appengine_inbound_appid != 'virustotal-step-2020':
+                             signature: Optional[str] = Header(None)):
+    if not verify_asymmetric_ec('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, str(jsonable_encoder(request)), signature):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 

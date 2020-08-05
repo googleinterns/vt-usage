@@ -1,12 +1,14 @@
 import aiohttp
+import base64
 import certifi
+import hashlib
 import logging
 import re
 import ssl
 from fastapi import FastAPI, Request, Form, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from google.cloud import ndb
+from google.cloud import ndb, kms
 from typing import Optional
 
 import models
@@ -37,6 +39,19 @@ async def userdata(request: Request, apikey: str = Form(...), webhook: str = For
     return templates.TemplateResponse("index.html", {'request': request, 'content': 'Your answer was successfully saved'})
 
 
+def sign_asymmetric(project_id, location_id, key_ring_id, key_id, version_id, message):
+    client = kms.KeyManagementServiceClient()
+
+    key_version_name = client.crypto_key_version_path(project_id, location_id, key_ring_id, key_id, version_id)
+    message_bytes = message.encode('utf-8')
+    hash_ = hashlib.sha256(message_bytes).digest()
+    digest = {'sha256': hash_}
+    sign_response = client.asymmetric_sign(request={'name': key_version_name, 'digest': digest})
+    signature = base64.b64encode(sign_response.signature)
+
+    return signature.decode()
+
+
 @app.get('/run_queries/')
 async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
     if x_appengine_cron != 'true':
@@ -50,12 +65,14 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         headers={'x-apikey': user.apikey},
                         ssl=ssl_context
                     ) as resp:
-                    json = await resp.json()
-                    json['api_key'] = user.apikey
+                    json = {'api_key': user.apikey}
+                    json.update(await resp.json())
+                    
                     if resp.status != 200:
                         logging.error(resp.text())
                         raise HTTPException(400, 'Bad request')
-                    async with httpSession.post(user.webhook, json=json, ssl=ssl_context) as post:
+                    signature = sign_asymmetric('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, str(json))
+                    async with httpSession.post(user.webhook, json=json, headers={'Signature': signature}, ssl=ssl_context) as post:
                         post_response = await post.text()
                         if post.status != 200:
                             error_msg = 'Post to webhook failed with {}: {}'.format(post.status, post_response)

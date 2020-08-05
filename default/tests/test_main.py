@@ -81,7 +81,7 @@ def test_wrong_userdata():
 @asyncpatch('aiohttp.ClientSession.get')
 @asyncpatch('aiohttp.ClientSession.post')
 def test_run_queries(mock_post, mock_get, mock_q):
-    test_vt_data = {'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}}
+    test_vt_data = {'api_key': 'test_apikey', 'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}}
 
     mock_get.return_value.__aenter__.return_value.json = CoroutineMock()
     mock_get.return_value.__aenter__.return_value.status = 200
@@ -98,8 +98,8 @@ def test_run_queries(mock_post, mock_get, mock_q):
     assert response.status_code == 200
     assert response.text == '"Success"'
     models.Userdata.query.assert_called_once()
-    aiohttp.ClientSession.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers={'x-apikey': 'test_apikey'}, ssl=ANY)
-    aiohttp.ClientSession.post.assert_called_once_with('test_webhook', json=test_vt_data, ssl=ANY)
+    aiohttp.ClientSession.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers=ANY, ssl=ANY)
+    aiohttp.ClientSession.post.assert_called_once_with('http://localhost:8080/query-results/', json=test_vt_data, headers={'Signature': ANY},ssl=ANY)
 
 
 
