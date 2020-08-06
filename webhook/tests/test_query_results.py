@@ -4,6 +4,7 @@ from main import app
 from models import UserEmail
 from google.cloud import ndb
 
+import main
 import pytest
 
 correct_headers = {"X-Appengine-Inbound-Appid": "virustotal-step-2020"}
@@ -21,7 +22,15 @@ def patch_key_get_default_email(monkeypatch):
     monkeypatch.setattr(ndb.Key, 'get', get)
 
 
-def test_query_results_empty_list(patch_key_get_default_email):
+@pytest.fixture
+def patch_verify_asymmetric_ec(monkeypatch):
+    def verify(*args, **kwargs):
+        pass
+
+    monkeypatch.setattr(main, 'verify_asymmetric_ec', verify)
+
+
+def test_query_results_empty_list(patch_key_get_default_email, patch_verify_asymmetric_ec):
     r = client.post(
         URL,
         headers=correct_headers,
@@ -30,7 +39,7 @@ def test_query_results_empty_list(patch_key_get_default_email):
     assert r.status_code == 200
 
 
-def test_query_results_normal_request(patch_key_get_default_email):
+def test_query_results_normal_request(patch_key_get_default_email, patch_verify_asymmetric_ec):
     type_list = ["file", "url", "domain", "ip_address"]
     r = client.post(
         URL,
@@ -69,7 +78,7 @@ def test_query_results_bad_type(patch_key_get_default_email):
     assert r.status_code == 422
 
 
-def test_query_results_links_and_meta(patch_key_get_default_email):
+def test_query_results_links_and_meta(patch_key_get_default_email, patch_verify_asymmetric_ec):
     links = {
         "self": "https://google.com",
         "next": "https://gmail.com",
@@ -88,6 +97,7 @@ def test_query_results_links_and_meta(patch_key_get_default_email):
     assert r.status_code == 200
 
 
+@pytest.mark.skip('Don\'t need to check authentication for now')
 def test_query_results_wrong_headers(patch_key_get_default_email):
     r = client.post(
         URL,

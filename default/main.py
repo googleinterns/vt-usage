@@ -67,13 +67,13 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         ssl=ssl_context
                     ) as resp:
                     js = {'api_key': user.apikey}
-                    js.update(await resp.js())
+                    js.update(await resp.json())
                     
                     if resp.status != 200:
                         logging.error(resp.text())
                         raise HTTPException(400, 'Bad request')
                     signature = sign_asymmetric('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, json.dumps(js))
-                    async with httpSession.post(user.webhook, js=js, headers={'Signature': signature}, ssl=ssl_context) as post:
+                    async with httpSession.post(user.webhook, json=js, headers={'Signature': signature}, ssl=ssl_context) as post:
                         post_response = await post.text()
                         if post.status != 200:
                             error_msg = 'Post to webhook failed with {}: {}'.format(post.status, post_response)
