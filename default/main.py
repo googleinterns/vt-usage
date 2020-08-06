@@ -2,6 +2,7 @@ import aiohttp
 import base64
 import certifi
 import hashlib
+import json
 import logging
 import re
 import ssl
@@ -65,14 +66,14 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         headers={'x-apikey': user.apikey},
                         ssl=ssl_context
                     ) as resp:
-                    json = {'api_key': user.apikey}
-                    json.update(await resp.json())
+                    js = {'api_key': user.apikey}
+                    js.update(await resp.js())
                     
                     if resp.status != 200:
                         logging.error(resp.text())
                         raise HTTPException(400, 'Bad request')
-                    signature = sign_asymmetric('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, str(json))
-                    async with httpSession.post(user.webhook, json=json, headers={'Signature': signature}, ssl=ssl_context) as post:
+                    signature = sign_asymmetric('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, json.dumps(js))
+                    async with httpSession.post(user.webhook, js=js, headers={'Signature': signature}, ssl=ssl_context) as post:
                         post_response = await post.text()
                         if post.status != 200:
                             error_msg = 'Post to webhook failed with {}: {}'.format(post.status, post_response)

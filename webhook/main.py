@@ -12,8 +12,6 @@ from models import VTAPI, APIKey, APIKeyEmail, UserEmail
 import base64
 import json
 import logging as log
-
-
 import hashlib
 
 app = FastAPI()
@@ -48,18 +46,16 @@ def verify_asymmetric_ec(project_id, location_id, key_ring_id, key_id, version_i
     ec_key = serialization.load_pem_public_key(pem, default_backend())
     hash_ = hashlib.sha256(message_bytes).digest()
 
-    try:
-        sha256 = hashes.SHA256()
-        ec_key.verify(signature, hash_, ec.ECDSA(utils.Prehashed(sha256)))
-        return True
-    except InvalidSignature:
-        return False
+    sha256 = hashes.SHA256()
+    ec_key.verify(signature, hash_, ec.ECDSA(utils.Prehashed(sha256)))  # raises InvalidSignature
 
 
 @app.post("/query-results/")
 async def send_query_results(request: VTAPI,
                              signature: Optional[str] = Header(None)):
-    if not verify_asymmetric_ec('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, str(jsonable_encoder(request)), signature):
+    try:
+        verify_asymmetric_ec('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, json.dumps(jsonable_encoder(request)), signature)
+    except InvalidSignature:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
