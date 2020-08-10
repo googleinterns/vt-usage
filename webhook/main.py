@@ -2,15 +2,17 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec, utils
+from datetime import datetime
 from fastapi import FastAPI, Header, HTTPException, status, Response, Body
 from fastapi.encoders import jsonable_encoder
-from google.cloud import logging, ndb, kms
+from google.cloud import logging, ndb, secretmanager_v1 as secretmanager
 from typing import Optional, Dict
 
-from models import VTAPI, APIKey, APIKeyEmail, UserEmail
+from models import VTAPI, APIKey, APIKeyEmail, UserEmail, AuthUser
 
 import base64
 import json
+import jwt
 import logging as log
 import hashlib
 
@@ -32,32 +34,35 @@ async def root():
     return {"data": "Hello World"}
 
 
-def verify_asymmetric_ec(project_id, location_id, key_ring_id, key_id, version_id, message, signature):
-    message_bytes = message.encode('utf-8')
-    signature = base64.b64decode(signature.encode())
+def get_secret(secret):
+    client = secretmanager.SecretManagerServiceClient()
+    version = client.secret_version_path('virustotal-step-2020', secret, '1')
+    return client.access_secret_version(version).payload.data.decode()
 
-    client = kms.KeyManagementServiceClient()
 
-    key_version_name = client.crypto_key_version_path(project_id, location_id, key_ring_id, key_id, version_id)
+@app.post("/auth/")
+async def auth(request: AuthUser):
+    authorized_key = get_secret('access_key')
 
-    public_key = client.get_public_key(request={'name': key_version_name})
+    if request.access_key != authorized_key:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Unknown key")
+    
+    jwt_secret = get_secret('jwt_secret')
 
-    pem = public_key.pem.encode('utf-8')
-    ec_key = serialization.load_pem_public_key(pem, default_backend())
-    hash_ = hashlib.sha256(message_bytes).digest()
-
-    sha256 = hashes.SHA256()
-    ec_key.verify(signature, hash_, ec.ECDSA(utils.Prehashed(sha256)))  # raises InvalidSignature
+    res = jwt.encode({'api_key': request.vt_key, 'issued': datetime.now().isoformat()}, jwt_secret, algorithm='HS256').decode()
+    return res
 
 
 @app.post("/query-results/")
-async def send_query_results(request: VTAPI,
-                             signature: Optional[str] = Header(None)):
+async def send_query_results(request: VTAPI):
     try:
-        verify_asymmetric_ec('virustotal-step-2020', 'global', 'webhook-keys', 'webhook-sign', 1, json.dumps(jsonable_encoder(request)), signature)
-    except InvalidSignature:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
+        decoded = jwt.decode(request.jwt_token, get_secret('jwt_secret'), algorithms=['HS256'])
+    except jwt.exceptions.InvalidSignatureError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
+
+    if (datetime.now() - datetime.fromisoformat(decoded['issued'])).seconds > 60:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token expired")
 
     email = None
     with client.context():
