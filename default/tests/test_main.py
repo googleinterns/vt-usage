@@ -2,12 +2,12 @@ import aiohttp
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, patch, call
 from asynctest import CoroutineMock, MagicMock as AsyncMagicMock, patch as asyncpatch
 
-from main import app, models
+import main
 
-client = TestClient(app)
+client = TestClient(main.app)
 
 def test_index():
     response = client.get('/')
@@ -29,9 +29,9 @@ def test_userdata(monkeypatch):
 
     for webhook in webhooks:
         def put(udata):
-            assert udata == models.Userdata(apikey='test_apikey', webhook=webhook, vt_query='test_vt_query')
+            assert udata == main.models.Userdata(apikey='test_apikey', webhook=webhook, vt_query='test_vt_query')
 
-        monkeypatch.setattr(models.Userdata, 'put', put)
+        monkeypatch.setattr(main.models.Userdata, 'put', put)
         response = client.post(
             '/userdata/',
             data={
@@ -77,11 +77,12 @@ def test_wrong_userdata():
     assert response.status_code == 400
 
 
-@patch('models.Userdata.query', return_value=[models.Userdata(apikey='test_apikey', webhook='test_webhook', vt_query='test_vt_query')])
+@patch('main.get_secret', return_value='SECRET')
+@patch('main.models.Userdata.query', return_value=[main.models.Userdata(apikey='test_apikey', webhook='test_webhook', vt_query='test_vt_query')])
 @asyncpatch('aiohttp.ClientSession.get')
 @asyncpatch('aiohttp.ClientSession.post')
-def test_run_queries(mock_post, mock_get, mock_q):
-    test_vt_data = {'api_key': 'test_apikey', 'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}}
+def test_run_queries(mock_post, mock_get, mock_q, mock_secret):
+    test_vt_data = {'api_key': 'test_apikey', 'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}, 'jwt_token': 'resp_text'}
 
     mock_get.return_value.__aenter__.return_value.json = CoroutineMock()
     mock_get.return_value.__aenter__.return_value.status = 200
@@ -97,9 +98,11 @@ def test_run_queries(mock_post, mock_get, mock_q):
 
     assert response.status_code == 200
     assert response.text == '"Success"'
-    models.Userdata.query.assert_called_once()
+    main.models.Userdata.query.assert_called_once()
     aiohttp.ClientSession.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers=ANY, ssl=ANY)
-    aiohttp.ClientSession.post.assert_called_once_with('test_webhook', json=test_vt_data, headers={'Signature': ANY},ssl=ANY)
+    aiohttp.ClientSession.post.assert_has_calls(
+        [call('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/', json={'access_key': 'SECRET', 'vt_key': 'test_apikey'}, ssl=ANY),
+         call('test_webhook', json=test_vt_data, ssl=ANY)], any_order=True)
 
 
 

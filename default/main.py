@@ -69,10 +69,10 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                     async with httpSession.post('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/',
                                                 json={'access_key': get_secret('access_key'), 'vt_key': user.apikey}, ssl=ssl_context) as auth_res:
                         js['jwt_token'] = await auth_res.text()
-                        js['jwt_token'] = js['jwt_token'][1:-1]  # I have no idea why does webhook send a key with quotes
+                        js['jwt_token'] = js['jwt_token'].strip('"')  # I have no idea why does webhook send a key with quotes
                         if auth_res.status != 200:
                             logging.error('Authentication on webhook failed')
-                            raise HTTPException(500, 'Internal server error')
+                            raise HTTPException(403, 'Authentication failed')
                         async with httpSession.post(user.webhook, json=js, ssl=ssl_context) as post:
                             post_response = await post.text()
                             if post.status != 200:
