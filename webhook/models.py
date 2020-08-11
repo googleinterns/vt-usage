@@ -34,6 +34,7 @@ class VTAPI(APIKey):
     data: List[VTData]
     links: Dict
     meta: Dict
+    jwt_token: str
 
 
 class APIKeyEmail(APIKey):
@@ -50,3 +51,8 @@ class APIKeyEmail(APIKey):
 
 class UserEmail(ndb.Model):
     email = ndb.StringProperty()
+
+
+class AuthUser(BaseModel):
+    access_key: str
+    vt_key: str

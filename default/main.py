@@ -1,12 +1,15 @@
 import aiohttp
+import base64
 import certifi
+import hashlib
+import json
 import logging
 import re
 import ssl
 from fastapi import FastAPI, Request, Form, HTTPException, Header
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from google.cloud import ndb
+from google.cloud import ndb, secretmanager_v1 as secretmanager
 from typing import Optional
 
 import models
@@ -37,6 +40,12 @@ async def userdata(request: Request, apikey: str = Form(...), webhook: str = For
     return templates.TemplateResponse("index.html", {'request': request, 'content': 'Your answer was successfully saved'})
 
 
+def get_secret(secret):
+    client = secretmanager.SecretManagerServiceClient()
+    version = client.secret_version_path('virustotal-step-2020', secret, '1')
+    return client.access_secret_version(version).payload.data.decode()
+
+
 @app.get('/run_queries/')
 async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
     if x_appengine_cron != 'true':
@@ -50,15 +59,24 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         headers={'x-apikey': user.apikey},
                         ssl=ssl_context
                     ) as resp:
-                    json = await resp.json()
-                    json['api_key'] = user.apikey
+                    js = {'api_key': user.apikey}
+                    js.update(await resp.json())
+                    
                     if resp.status != 200:
                         logging.error(resp.text())
                         raise HTTPException(400, 'Bad request')
-                    async with httpSession.post(user.webhook, json=json, ssl=ssl_context) as post:
-                        post_response = await post.text()
-                        if post.status != 200:
-                            error_msg = 'Post to webhook failed with {}: {}'.format(post.status, post_response)
-                            logging.error(error_msg)
-                            raise HTTPException(400, 'Bad request')
+
+                    async with httpSession.post('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/',
+                                                json={'access_key': get_secret('access_key'), 'vt_key': user.apikey}, ssl=ssl_context) as auth_res:
+                        js['jwt_token'] = await auth_res.text()
+                        js['jwt_token'] = js['jwt_token'].strip('"')  # I have no idea why does webhook send a key with quotes
+                        if auth_res.status != 200:
+                            logging.error('Authentication on webhook failed')
+                            raise HTTPException(403, 'Authentication failed')
+                        async with httpSession.post(user.webhook, json=js, ssl=ssl_context) as post:
+                            post_response = await post.text()
+                            if post.status != 200:
+                                error_msg = 'Post to webhook failed with {}: {}'.format(post.status, post_response)
+                                logging.error(error_msg)
+                                raise HTTPException(400, 'Bad request')
         return 'Success'
