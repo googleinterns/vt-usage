@@ -50,16 +50,17 @@ async def auth(request: AuthUser):
 
     jwt_secret = get_secret('jwt_secret')
 
-    res = jwt.encode({'api_key': request.vt_key, 'issued': datetime.now(
-    ).isoformat()}, jwt_secret, algorithm='HS256').decode()
+    res = jwt.encode({'api_key': request.vt_key, 'issued': datetime.now().isoformat()},
+                     jwt_secret, algorithm='HS256').decode()
     return res
 
 
 @app.post("/query-results/")
 async def send_query_results(request: VTAPI):
     try:
-        decoded = jwt.decode(request.jwt_token, get_secret(
-            'jwt_secret'), algorithms=['HS256'])
+        decoded = jwt.decode(request.jwt_token,
+                             get_secret('jwt_secret'),
+                             algorithms=['HS256'])
     except jwt.exceptions.InvalidSignatureError:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
