@@ -47,22 +47,26 @@ async def auth(request: AuthUser):
     if request.access_key != authorized_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Unknown key")
-    
+
     jwt_secret = get_secret('jwt_secret')
 
-    res = jwt.encode({'api_key': request.vt_key, 'issued': datetime.now().isoformat()}, jwt_secret, algorithm='HS256').decode()
+    res = jwt.encode({'api_key': request.vt_key, 'issued': datetime.now(
+    ).isoformat()}, jwt_secret, algorithm='HS256').decode()
     return res
 
 
 @app.post("/query-results/")
 async def send_query_results(request: VTAPI):
     try:
-        decoded = jwt.decode(request.jwt_token, get_secret('jwt_secret'), algorithms=['HS256'])
+        decoded = jwt.decode(request.jwt_token, get_secret(
+            'jwt_secret'), algorithms=['HS256'])
     except jwt.exceptions.InvalidSignatureError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden")
 
     if (datetime.now() - datetime.fromisoformat(decoded['issued'])).seconds > 60:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token expired")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Token expired")
 
     email = None
     with client.context():
@@ -78,9 +82,9 @@ async def send_query_results(request: VTAPI):
         email, json.dumps(jsonable_encoder(request.data))))
 
 
-@app.post("/email-address/")
+@app.post("/email-address/",
+          responses={status.HTTP_201_CREATED: {}})
 async def set_email(content: APIKeyEmail, response: Response):
-    # TODO Check why documentation is not generating correct response code_status.
     def update_email(api_key: str, email: str, response: Response):
         email_obj = ndb.Key("UserEmail", api_key).get()
         if email_obj is None:
