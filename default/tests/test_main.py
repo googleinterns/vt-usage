@@ -16,8 +16,7 @@ def test_index():
         assert response.text == correct.read()
 
 
-def test_userdata(monkeypatch):
-    webhooks = [
+@pytest.mark.parametrize('webhook', [
         'webhook.com',
         'test.webhook.com',
         'https://web_hook.com',
@@ -25,23 +24,22 @@ def test_userdata(monkeypatch):
         'http://webhook.com/#1a',
         'webhook.com:80/'
         'http://test.webhook.com:8080/a/b/c_?d=e',
-    ]
+    ])
+def test_userdata(webhook, monkeypatch):
+    def put(udata):
+        assert udata == main.models.Userdata(apikey='test_apikey', webhook=webhook, vt_query='test_vt_query')
 
-    for webhook in webhooks:
-        def put(udata):
-            assert udata == main.models.Userdata(apikey='test_apikey', webhook=webhook, vt_query='test_vt_query')
-
-        monkeypatch.setattr(main.models.Userdata, 'put', put)
-        response = client.post(
-            '/userdata/',
-            data={
-                'apikey': 'test_apikey',
-                'webhook': webhook,
-                'vt_query': 'test_vt_query'
-            })
-        assert response.status_code == 200
-        with open('tests/testfiles/userdata.html', 'r') as correct:
-            assert response.text == correct.read()
+    monkeypatch.setattr(main.models.Userdata, 'put', put)
+    response = client.post(
+        '/userdata/',
+        data={
+            'apikey': 'test_apikey',
+            'webhook': webhook,
+            'vt_query': 'test_vt_query'
+        })
+    assert response.status_code == 200
+    with open('tests/testfiles/userdata.html', 'r') as correct:
+        assert response.text == correct.read()
 
 
 def test_wrong_userdata():
