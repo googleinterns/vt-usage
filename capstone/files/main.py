@@ -18,7 +18,7 @@ MEDIA_DIR = "media"
 
 @app.get("/")
 async def load_main_page(request: Request):
-    return templates.TemplateResponse("form.html", {'request': request})
+    return templates.TemplateResponse("form.html.jinja", {'request': request})
 
 
 @app.post("/upload-file/")
