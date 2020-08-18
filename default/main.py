@@ -56,7 +56,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
             async with aiohttp.ClientSession() as httpSession:
 
                 async with httpSession.get(
-                        'https://www.virustotal.com/api/v3/intelligence/search?query={query}'.format(query=user.vt_query),
+                        f'https://www.virustotal.com/api/v3/intelligence/search?query={user.vt_query}',
                         headers={'x-apikey': user.apikey},
                         ssl=ssl_context) as vt_resp:
 
@@ -64,7 +64,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                     payload.update(await vt_resp.json())
 
                     if vt_resp.status != 200:
-                        logging.error('VT query failed with {}: {}'.format(vt_resp.status, vt_resp.text()))
+                        logging.error(f'VT query failed with {vt_resp.status}: {vt_resp.text()}')
                         raise HTTPException(400, 'Bad request')
 
                     async with httpSession.post('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/',
@@ -75,7 +75,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         payload['jwt_token'] = jwt_token.strip('"')  # webhook sends token with quotes
 
                         if auth_resp.status != 200:
-                            logging.error('Authentication on webhook failed with {}: {}'.format(auth_resp.status, auth_resp.text()))
+                            logging.error(f'Authentication on webhook failed with {auth_resp.status}: {auth_resp.text()}')
                             raise HTTPException(403, 'Authentication failed')
 
                         async with httpSession.post(user.webhook, json=payload, ssl=ssl_context) as webhook_resp:
@@ -83,7 +83,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                             result = await webhook_resp.text()
 
                             if webhook_resp.status != 200:
-                                logging.error('Post to webhook failed with {}: {}'.format(webhook_resp.status, result))
+                                logging.error(f'Post to webhook failed with {webhook_resp.status}: {result}')
                                 raise HTTPException(400, 'Bad request')
 
     return 'Success'
