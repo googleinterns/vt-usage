@@ -24,9 +24,12 @@ async def load_main_page(request: Request):
 @app.post("/upload-file/")
 async def upload_file(request: Request, file: UploadFile = File(...)):
     unique_name = uuid.uuid4().hex
-    destination = open(os.path.join(MEDIA_DIR, unique_name), 'wb+')
+    path = os.path.join(MEDIA_DIR, unique_name)
+
+    destination = open(path, 'wb+')
     shutil.copyfileobj(file.file, destination)
     destination.close()
+
     return templates.TemplateResponse("file_name.html.jinja",
                                       {"request": request, "name": unique_name})
 
