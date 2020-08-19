@@ -3,7 +3,8 @@
 <form method="post" action="/upload-file/" enctype="multipart/form-data">
     <div class="form-group">
       <label for="file">Upload your file!</label>
-      <input type="file" class="form-control-file" id="file">
+      <input type="file" class="form-control-file" name="file">
+      <button type="submit" class="btn btn-primary mb-2">Submit</button>
     </div>
 </form>
 {% endblock %}
