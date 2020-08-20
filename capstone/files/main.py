@@ -1,13 +1,11 @@
-from fastapi import FastAPI, File, UploadFile, Request, Form, status, HTTPException
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import FileResponse
-
 import os
 import shutil
-import uvicorn
 import uuid
 
+import uvicorn
+from fastapi import FastAPI, File, UploadFile, Request, status, HTTPException
+from fastapi.responses import FileResponse
+from fastapi.templating import Jinja2Templates
 
 app = FastAPI()
 
@@ -26,9 +24,9 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
     unique_name = uuid.uuid4().hex
     path = os.path.join(MEDIA_DIR, unique_name)
 
-    destination = open(path, 'wb+')
-    shutil.copyfileobj(file.file, destination)
-    destination.close()
+    with open(path, 'wb+') as destination:
+        shutil.copyfileobj(file.file, destination)
+
     return templates.TemplateResponse("file_name.html.jinja",
                                       {"request": request, "name": unique_name})
 
@@ -41,7 +39,7 @@ async def download_file(file_name: str):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="File not found.")
 
-    return FileResponse(os.path.join(MEDIA_DIR, file_name))
+    return FileResponse(path)
 
 
 if __name__ == "__main__":

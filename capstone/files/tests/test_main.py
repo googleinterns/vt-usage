@@ -1,12 +1,10 @@
-from fastapi.testclient import TestClient
-from fastapi import UploadFile
-
+import builtins
+import tempfile
 from os import path
 
-import builtins
 import main
-import tempfile
 import pytest
+from fastapi.testclient import TestClient
 
 client = TestClient(main.app)
 
