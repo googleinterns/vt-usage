@@ -49,13 +49,17 @@ def test_upload_file(monkeypatch):
 
     monkeypatch.setattr(builtins, "open", open)
 
-    response = client.post("/upload-file/",
-                           headers={"Content-Type": "multipart/form-data"},
-                           data={
-                               "file": b"bytesbytes"
-                           })
+    f = tempfile.TemporaryFile()
+    content = b"This is an example \x00\xff"
+    f.write(content)
+    f.seek(0)
 
+    response = client.post("/upload-file/",
+                           files={
+                               "file": f
+                           })
+    f.close()
     assert response.status_code == 200
     assert response.template.name == "file_name.html.jinja"
-    assert "request" in response.content
-    assert "name" in response.content
+    assert "request" in response.context
+    assert "name" in response.context

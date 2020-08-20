@@ -29,7 +29,6 @@ async def upload_file(request: Request, file: UploadFile = File(...)):
     destination = open(path, 'wb+')
     shutil.copyfileobj(file.file, destination)
     destination.close()
-
     return templates.TemplateResponse("file_name.html.jinja",
                                       {"request": request, "name": unique_name})
 
@@ -46,4 +45,4 @@ async def download_file(file_name: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8000, debug=True, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, debug=True, reload=True)
