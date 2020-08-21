@@ -21,6 +21,7 @@ async def load_main_page(request: Request):
 
 @app.post("/upload-file/")
 async def upload_file(request: Request, file: UploadFile = File(...)):
+    # TODO: Make sure that file isn't too big. @niedziol
     unique_name = uuid.uuid4().hex
     path = os.path.join(MEDIA_DIR, unique_name)
 

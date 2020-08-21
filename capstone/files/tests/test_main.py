@@ -47,16 +47,11 @@ def test_upload_file(monkeypatch):
 
     monkeypatch.setattr(builtins, "open", open)
 
-    f = tempfile.TemporaryFile()
-    content = b"This is an example \x00\xff"
-    f.write(content)
-    f.seek(0)
-
     response = client.post("/upload-file/",
                            files={
-                               "file": f
+                               "file": ("This is an example \x00\xff", "filename.txt")
                            })
-    f.close()
+
     assert response.status_code == 200
     assert response.template.name == "file_name.html.jinja"
     assert "request" in response.context
