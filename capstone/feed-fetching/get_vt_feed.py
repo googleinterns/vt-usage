@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from elasticsearch import Elasticsearch
 
 es = Elasticsearch('elastic-stack-instance:9200')
-apikey = os.environ('VTKEY')  # is there a better way to store api key?
+apikey = os.environ.get('VTKEY')  # is there a better way to store api key?
 
 fields_allowed = {'capabilities_tags', 'first_submission_date', 'last_submission_date', 'last_analysis_stats',
                   'meaningful_name', 'sigma_analysis_stats', 'type_description', 'type_tag', 'reputation', 'vhash',
