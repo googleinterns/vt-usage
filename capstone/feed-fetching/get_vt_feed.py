@@ -35,7 +35,7 @@ def prepare_doc(doc: dict):
     Args:
       - doc: document from VT Feed.
     Returns:
-      Returns the doc left with only allowed fields and formatted for elastic timestamps.
+      the doc left with only allowed fields and formatted for elastic timestamps.
     """
     summary_doc = {key: val for key, val in doc.items() if key in ALLOWED_FIELDS}
     for field in list(doc.keys()):
