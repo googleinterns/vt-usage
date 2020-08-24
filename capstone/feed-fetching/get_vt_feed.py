@@ -38,9 +38,7 @@ def prepare_doc(doc: dict):
       the doc left with only allowed fields and formatted for elastic timestamps.
     """
     summary_doc = {key: val for key, val in doc.items() if key in ALLOWED_FIELDS}
-    for field in list(doc.keys()):
-        if field not in ALLOWED_FIELDS:
-            del doc[field]
+
     if 'first_submission_date' in summary_doc:
         summary_doc['first_submission_date'] = datetime.fromtimestamp(summary_doc['first_submission_date'])
     if 'last_submission_date' in summary_doc:
