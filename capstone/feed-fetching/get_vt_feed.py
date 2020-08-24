@@ -37,15 +37,13 @@ def prepare_doc(doc: dict):
     Returns:
       Returns the doc left with only allowed fields and formatted for elastic timestamps.
     """
-    for field in list(doc.keys()):  # doc.keys() is changing while iterating, list makes it static
-        if field not in ALLOWED_FIELDS:
-            del doc[field]
+    summary_doc = {key: val for key, val in doc.items() if key in ALLOWED_FIELDS}
 
-    if 'first_submission_date' in doc:
-        doc['first_submission_date'] = datetime.fromtimestamp(doc['first_submission_date'])
-    if 'last_submission_date' in doc:
-        doc['last_submission_date'] = datetime.fromtimestamp(doc['last_submission_date'])
-    return doc
+    if 'first_submission_date' in summary_doc:
+        summary_doc['first_submission_date'] = datetime.fromtimestamp(summary_doc['first_submission_date'])
+    if 'last_submission_date' in summary_doc:
+        summary_doc['last_submission_date'] = datetime.fromtimestamp(summary_doc['last_submission_date'])
+    return summary_doc
 
 
 def main():

@@ -7,6 +7,8 @@ import unittest
 from datetime import datetime
 from unittest.mock import patch, Mock
 
+import get_vt_feed
+
 
 class MockResponse:
     def __init__(self, status_code=200, text='', content=b''):
@@ -17,14 +19,20 @@ class MockResponse:
 
 
 class TestFeedFetching(unittest.TestCase):
-    @unittest.mock.patch('os.environ.get', return_value='test-key')
+    @classmethod
+    def setUpClass(cls):
+        cls.vtkey = get_vt_feed.API_KEY
+        get_vt_feed.API_KEY = 'test-key'
+
+    @classmethod
+    def tearDownClass(cls):
+        get_vt_feed.API_KEY = cls.vtkey
+
     @unittest.mock.patch('requests.get', return_value=MockResponse(status_code=200, content=b'vt-feed'))
     @unittest.mock.patch('bz2.open', return_value=io.BytesIO(b'{ "attributes": { "attr1": "val1", "attr2": "val2" } }'))
-    def test_get_feed(self, bz2_open, requests_get, os_environ):
-        import get_vt_feed
+    def test_get_feed(self, bz2_open, requests_get):
         result = list(get_vt_feed.get_feed(0))
 
-        os.environ.get.assert_called_with('VTKEY')
         filename = datetime.utcnow().strftime('%Y%m%d%H%M')
         requests.get.assert_called_once_with('https://www.virustotal.com/api/v3/feeds/files/{}'.format(filename),
                                             headers={'X-Apikey': 'test-key'})
@@ -33,8 +41,6 @@ class TestFeedFetching(unittest.TestCase):
 
 
     def test_prepare_doc(self):
-        import get_vt_feed
-
         assert get_vt_feed.prepare_doc({'md5': '', 'md6': '', 'sha1': '', 'sha256': '', 'field': ''}) == \
             {'md5': '', 'sha1': '', 'sha256': ''}
         
