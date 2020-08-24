@@ -38,6 +38,14 @@ class TestFeedFetching(unittest.TestCase):
                                             headers={'X-Apikey': 'test-key'})
         bz2.open.assert_called_once()
         assert result == [{'attr1': 'val1', 'attr2': 'val2'}]
+    
+
+    @unittest.mock.patch('requests.get', return_value=MockResponse(status_code=400, text='bad test request'))
+    @unittest.mock.patch('bz2.open', return_value=io.BytesIO(b'{ "attributes": { "attr1": "val1", "attr2": "val2" } }'))
+    def test_get_feed_fail(self, bz2_open, requests_get):
+        filename = datetime.utcnow().strftime('%Y%m%d%H%M')
+        with self.assertRaisesRegex(Exception, 'Feed fetching for {} failed with 400: bad test request'.format(filename)):
+            list(get_vt_feed.get_feed(0))
 
 
     def test_prepare_doc(self):
