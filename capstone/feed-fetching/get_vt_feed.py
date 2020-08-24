@@ -10,9 +10,6 @@ from elasticsearch import Elasticsearch
 
 es = Elasticsearch('elastic-stack-instance:9200')
 API_KEY = os.environ.get('VTKEY')  # is there a better way to store api key?
-SUM1 = 0
-SUM2 = 0
-
 ALLOWED_FIELDS = {'capabilities_tags', 'first_submission_date', 'last_submission_date', 'last_analysis_stats',
                   'meaningful_name', 'sigma_analysis_stats', 'type_description', 'type_tag', 'reputation', 'vhash',
                   'sha1', 'sha256', 'imphash', 'md5', 'times_submitted', 'authentihash', 'tags', 'timestamp'}
@@ -40,15 +37,10 @@ def prepare_doc(doc: dict):
     Returns:
       Returns the doc left with only allowed fields and formatted for elastic timestamps.
     """
-    global SUM1, SUM2
-    t = time()
     summary_doc = {key: val for key, val in doc.items() if key in ALLOWED_FIELDS}
-    SUM1 += float(time() - t)
-    t = time()
     for field in list(doc.keys()):
         if field not in ALLOWED_FIELDS:
             del doc[field]
-    SUM2 += float(time() - t)
     if 'first_submission_date' in summary_doc:
         summary_doc['first_submission_date'] = datetime.fromtimestamp(summary_doc['first_submission_date'])
     if 'last_submission_date' in summary_doc:
@@ -60,8 +52,7 @@ def main():
     for doc in itertools.chain.from_iterable(get_feed(i) for i in range(60, 75)):
         prepared = prepare_doc(doc)
         date = datetime.now().strftime("%Y.%m.%d")
-        # es.index(index='virustotal-feed-{}'.format(date), body=prepared)
-    print(SUM1, SUM2)
+        es.index(index='virustotal-feed-{}'.format(date), body=prepared)
 
 
 if __name__ == "__main__":
