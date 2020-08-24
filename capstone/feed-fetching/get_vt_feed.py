@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from elasticsearch import Elasticsearch
 
 es = Elasticsearch('elastic-stack-instance:9200')
-apikey = os.environ.get('VTKEY')  # is there a better way to store api key?
+API_KEY = os.environ.get('VTKEY')  # is there a better way to store api key?
 
-fields_allowed = {'capabilities_tags', 'first_submission_date', 'last_submission_date', 'last_analysis_stats',
+ALLOWED_FIELDS = {'capabilities_tags', 'first_submission_date', 'last_submission_date', 'last_analysis_stats',
                   'meaningful_name', 'sigma_analysis_stats', 'type_description', 'type_tag', 'reputation', 'vhash',
                   'sha1', 'sha256', 'imphash', 'md5', 'times_submitted', 'authentihash', 'tags', 'timestamp'}
 
@@ -18,26 +18,34 @@ fields_allowed = {'capabilities_tags', 'first_submission_date', 'last_submission
 def get_feed(timedelta_mins: int):
     filename = (datetime.utcnow() - timedelta(minutes=timedelta_mins)).strftime('%Y%m%d%H%M')
     response = requests.get('https://www.virustotal.com/api/v3/feeds/files/{}'.format(filename),
-                            headers={'X-Apikey': apikey})
+                            headers={'X-Apikey': API_KEY})
 
     if response.status_code != 200:
-        raise 'Feed fetching for {} failed with {}: {}'.format(filename, response.status_code, response.text)  # f-strings work only in python >= 3.6  :c
+        raise Exception('Feed fetching for {} failed with {}: {}'.format(filename, response.status_code, response.text))
     stream = io.BytesIO(response.content)
 
     for line in bz2.open(stream):
         yield json.loads(line.decode())['attributes']
 
 
-def prepare_doc(feed: dict):
-    for field in list(feed.keys()):
-        if field not in fields_allowed:
-            del feed[field]
+def prepare_doc(doc: dict):
+    """
+    Prepare file from VirusTotal feed to adding to Elasticsearch.
 
-    if 'first_submission_date' in feed:
-        feed['first_submission_date'] = datetime.fromtimestamp(feed['first_submission_date'])
-    if 'last_submission_date' in feed:
-        feed['last_submission_date'] = datetime.fromtimestamp(feed['last_submission_date'])
-    return feed
+    Args:
+      - doc: document from VT Feed.
+    Returns:
+      Returns the doc left with only allowed fields and formatted for elastic timestamps.
+    """
+    for field in list(doc.keys()):  # doc.keys() is changing while iterating, list makes it static
+        if field not in ALLOWED_FIELDS:
+            del doc[field]
+
+    if 'first_submission_date' in doc:
+        doc['first_submission_date'] = datetime.fromtimestamp(doc['first_submission_date'])
+    if 'last_submission_date' in doc:
+        doc['last_submission_date'] = datetime.fromtimestamp(doc['last_submission_date'])
+    return doc
 
 
 def main():
