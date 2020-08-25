@@ -1,6 +1,11 @@
 # VirusTotal Feed fetching
 
-This script fetches VT feed once in 15 minutes and adds it to a new elasticsearch index. 
+This script fetches VT feed once in 15 minutes and adds it to a new elasticsearch index.
+
+## Dependencies
+
+* Python >=3.5
+* virtualenv
 
 ## Deployment
 
