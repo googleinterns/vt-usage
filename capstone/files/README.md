@@ -27,7 +27,7 @@ deploy the app by running `./deploy.sh`.
 ### Example of ~/.ssh/config
 ```
 Host wazuh-agent
-  HostName 51.83.251.43
+  HostName ip.or.hostname
   User your-user-name
   IdentityFIle ~/.ssh/id_rsa
 ```
