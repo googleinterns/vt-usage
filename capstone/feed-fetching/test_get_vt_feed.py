@@ -1,7 +1,6 @@
 import bz2
 import io
 import os
-import pytest
 import requests
 import unittest
 from datetime import datetime
