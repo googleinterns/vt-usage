@@ -34,14 +34,14 @@ jobs:
 #        pip install -r requirements-dev.txt
 #        pytest
 #        deactivate
-    - name: Run tests in webhook
-      run: |
-        cd webhook
-        python3 -m venv venv
-        . venv/bin/activate
-        pip install -r requirements-dev.txt
-        pytest
-        deactivate
+#    - name: Run tests in webhook
+#      run: |
+#        cd webhook
+#        python3 -m venv venv
+#        . venv/bin/activate
+#        pip install -r requirements-dev.txt
+#        pytest
+#        deactivate
     - name: Run tests in capstone/files
       run: |
         cd capstone/files/app
