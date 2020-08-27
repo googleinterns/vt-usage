@@ -1,20 +1,14 @@
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, utils
 from datetime import datetime
-from fastapi import FastAPI, Header, HTTPException, status, Response, Body
+import json
+import logging as log
+import os
+
+from fastapi import FastAPI, HTTPException, status, Response
 from fastapi.encoders import jsonable_encoder
 from google.cloud import logging, ndb, secretmanager_v1 as secretmanager
-from typing import Optional, Dict
-
 from models import VTAPI, APIKey, APIKeyEmail, UserEmail, AuthUser
-
-import base64
-import json
 import jwt
-import logging as log
-import hashlib
+
 
 app = FastAPI()
 
@@ -25,7 +19,8 @@ def setup_cloud_logging():
     logger.setup_logging()
 
 
-setup_cloud_logging()
+if "GAE_APPLICATION" in os.environ:
+    setup_cloud_logging()
 
 
 @app.get("/")
