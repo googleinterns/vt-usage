@@ -5,7 +5,11 @@ set -e
 
 # Install Kibana.
 apt-get install kibana=7.8.1
-(cd /usr/share/kibana/ && sudo -u kibana bin/kibana-plugin install https://packages.wazuh.com/wazuhapp/wazuhapp-3.13.1_7.8.1.zip)
+(cd /usr/share/kibana/ && sudo -u kibana bin/kibana-plugin install https://packages-dev.wazuh.com/trash/ui/kibana/wazuhapp-4.0.0_7.8.1.zip)
+sed -i 's/v4\///g' /usr/share/kibana/plugins/wazuh/server/controllers/wazuh-api.js
+sed -i 's/v4\///g' /usr/share/kibana/plugins/wazuh/server/lib/api-interceptor.js
+sed -i 's/v4\///g' /usr/share/kibana/plugins/wazuh/server/lib/cron-scheduler/apiRequest.js
+sed -i "s/path \= path \+ \'\/v4\'//g" /usr/share/kibana/plugins/wazuh/util/get-path.js
 
 # Bind Kibana to IP.
 sed -i "s/#server.host:.*/server.host: \"elastic-stack-instance\"/" /etc/kibana/kibana.yml
