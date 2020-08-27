@@ -1,7 +1,9 @@
 import aiohttp
 import pytest
+from contextlib import contextmanager
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from google.cloud import ndb
 from unittest.mock import ANY, patch, call
 from asynctest import CoroutineMock, MagicMock as AsyncMagicMock, patch as asyncpatch
 
@@ -16,6 +18,22 @@ def test_index():
         assert response.text == correct.read()
 
 
+class MockContext:
+    @contextmanager
+    def context(self):
+        try:
+            yield None
+        except:
+            pass
+
+
+@pytest.fixture
+def patch_ndb_client(monkeypatch):
+    def client():
+        return MockContext()
+    monkeypatch.setattr(ndb, 'Client', client)
+
+
 @pytest.mark.parametrize('webhook', [
         'webhook.com',
         'test.webhook.com',
@@ -25,7 +43,7 @@ def test_index():
         'webhook.com:80/'
         'http://test.webhook.com:8080/a/b/c_?d=e',
     ])
-def test_userdata(webhook, monkeypatch):
+def test_userdata(webhook, monkeypatch, patch_ndb_client):
     def put(udata):
         assert udata == main.models.Userdata(apikey='test_apikey', webhook=webhook, vt_query='test_vt_query')
 
@@ -42,7 +60,7 @@ def test_userdata(webhook, monkeypatch):
         assert response.text == correct.read()
 
 
-def test_wrong_userdata():
+def test_wrong_userdata(patch_ndb_client):
     response = client.post(
         '/userdata/',
         data={
@@ -79,7 +97,7 @@ def test_wrong_userdata():
 @patch('main.models.Userdata.query', return_value=[main.models.Userdata(apikey='test_apikey', webhook='test_webhook', vt_query='test_vt_query')])
 @asyncpatch('aiohttp.ClientSession.get')
 @asyncpatch('aiohttp.ClientSession.post')
-def test_run_queries(mock_post, mock_get, mock_q, mock_secret):
+def test_run_queries(mock_post, mock_get, mock_q, mock_secret, patch_ndb_client):
     test_vt_data = {'api_key': 'test_apikey', 'data': ['test_data'], 'links': {'self': 'test_self'}, 'meta': {'test_meta': 'test_meta'}, 'jwt_token': 'resp_text'}
 
     mock_get.return_value.__aenter__.return_value.json = CoroutineMock()
@@ -104,7 +122,7 @@ def test_run_queries(mock_post, mock_get, mock_q, mock_secret):
 
 
 
-def test_bad_run_queries():
+def test_bad_run_queries(patch_ndb_client):
     response = client.get(
         '/run_queries/'
     )

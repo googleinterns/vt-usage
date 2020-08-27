@@ -20,7 +20,6 @@ app.mount('/static', StaticFiles(directory='static'), name='static')
 
 templates = Jinja2Templates(directory='templates')
 
-client = ndb.Client()
 ssl_context = ssl.create_default_context(cafile=certifi.where())
 
 
@@ -31,6 +30,7 @@ async def index(request: Request):
 
 @app.post('/userdata/')
 async def userdata(request: Request, apikey: str = Form(...), webhook: str = Form(...), vt_query: str = Form(...)):
+    client = ndb.Client()
     re_url = re.compile(r'[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)')
     if not re_url.search(webhook):
         raise HTTPException(400, 'Bad request')
@@ -48,6 +48,7 @@ def get_secret(secret):
 
 @app.get('/run_queries/')
 async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
+    client = ndb.Client()
     if x_appengine_cron != 'true':
         raise HTTPException(403, 'Access forbidden')
 
