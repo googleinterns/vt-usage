@@ -21,10 +21,7 @@ def test_index():
 class MockContext:
     @contextmanager
     def context(self):
-        try:
-            yield None
-        except:
-            pass
+        yield None
 
 
 @pytest.fixture
