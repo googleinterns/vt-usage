@@ -1,22 +1,29 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from .fixtures import patch_ndb_client, patch_logger
 from google.cloud import ndb
-from main import app
 from models import UserEmail
 
+import main
 import pytest
 
-client = TestClient(app)
+client = TestClient(main.app)
 
 URL = "/email-address/"
 
 
-@pytest.fixture(autouse=True)
+@pytest.fixture
 def patch_transaction(monkeypatch):
     def transaction(func):
         func()
 
     monkeypatch.setattr(ndb, 'transaction', transaction)
+
+
+@pytest.fixture(autouse=True)
+def use_multiple_fixtures(patch_ndb_client, patch_logger, patch_transaction):
+    # This wrapper will apply many fixtures to all tests.
+    pass
 
 
 def test_email_address_new(monkeypatch):

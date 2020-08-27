@@ -1,6 +1,4 @@
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from google.cloud import ndb
 from main import app
 from models import UserEmail
 

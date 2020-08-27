@@ -1,6 +1,7 @@
 from datetime import datetime
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from .fixtures import patch_logger, patch_ndb_client
 from models import UserEmail
 from google.cloud import ndb
 
@@ -23,6 +24,12 @@ def patch_key_get_default_email(monkeypatch):
     monkeypatch.setattr(ndb.Key, 'get', get)
 
 
+@pytest.fixture(autouse=True)
+def use_multiple_fixtures(patch_ndb_client, patch_logger, patch_key_get_default_email):
+    # This wrapper will apply many fixtures to all tests.
+    pass
+
+
 @pytest.fixture
 def patch_get_secret(monkeypatch):
     def get(*args, **kwargs):
@@ -36,7 +43,7 @@ def patch_get_secret(monkeypatch):
     monkeypatch.setattr(jwt, 'decode', decode)
 
 
-def test_query_results_empty_list(patch_key_get_default_email, patch_get_secret):
+def test_query_results_empty_list(patch_get_secret):
     r = client.post(
         URL,
         headers=correct_headers,
@@ -45,7 +52,7 @@ def test_query_results_empty_list(patch_key_get_default_email, patch_get_secret)
     assert r.status_code == 200
 
 
-def test_query_results_normal_request(patch_key_get_default_email, patch_get_secret):
+def test_query_results_normal_request(patch_get_secret):
     type_list = ["file", "url", "domain", "ip_address"]
     r = client.post(
         URL,
@@ -66,7 +73,7 @@ def test_query_results_normal_request(patch_key_get_default_email, patch_get_sec
     assert r.status_code == 200
 
 
-def test_query_results_bad_type(patch_key_get_default_email):
+def test_query_results_bad_type():
     r = client.post(
         URL,
         headers=correct_headers,
@@ -85,7 +92,7 @@ def test_query_results_bad_type(patch_key_get_default_email):
     assert r.status_code == 422
 
 
-def test_query_results_links_and_meta(patch_key_get_default_email, patch_get_secret):
+def test_query_results_links_and_meta(patch_get_secret):
     links = {
         "self": "https://google.com",
         "next": "https://gmail.com",
@@ -115,7 +122,7 @@ def test_query_results_wrong_headers(patch_key_get_default_email):
     assert r.json() == {"detail": "Access forbidden"}
 
 
-def test_query_missing_mandatory_field(patch_key_get_default_email):
+def test_query_missing_mandatory_field():
     request = {
         "api_key": API_KEY,
         "data": [],
@@ -133,7 +140,7 @@ def test_query_missing_mandatory_field(patch_key_get_default_email):
         assert r.status_code == 422
 
 
-def test_query_results_missing_field_in_data(patch_key_get_default_email):
+def test_query_results_missing_field_in_data():
     obj = {
         "attributes": {},
         "id": "",
