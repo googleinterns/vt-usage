@@ -52,10 +52,10 @@ class TestFeedFetching(unittest.TestCase):
             {'md5': '', 'sha1': '', 'sha256': ''}
         
         assert get_vt_feed.prepare_doc({'field1': 1, 'field2': 2, 'first_submission_date': 1598269912}) == \
-            {'first_submission_date': datetime(2020, 8, 24, 14, 51, 52)}
+            {'first_submission_date': datetime.fromtimestamp(1598269912)}
         
         assert get_vt_feed.prepare_doc({'field1': 1, 'field2': 2, 'last_submission_date': 1598269912}) == \
-            {'last_submission_date': datetime(2020, 8, 24, 14, 51, 52)}
+            {'last_submission_date': datetime.fromtimestamp(1598269912)}
 
         feed = {field: field for field in get_vt_feed.ALLOWED_FIELDS}
         feed.update({'first_submission_date': 0, 'last_submission_date': 0})
