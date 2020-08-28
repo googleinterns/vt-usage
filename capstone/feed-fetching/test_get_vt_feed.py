@@ -60,7 +60,7 @@ class TestFeedFetching(unittest.TestCase):
         feed = {field: field for field in get_vt_feed.ALLOWED_FIELDS}
         feed.update({'first_submission_date': 0, 'last_submission_date': 0})
         result = get_vt_feed.prepare_doc(feed)
-        feed.update({'first_submission_date': datetime(1970, 1, 1, 3, 0), 'last_submission_date': datetime(1970, 1, 1, 3, 0)})
+        feed.update({'first_submission_date': datetime.fromtimestamp(0), 'last_submission_date': datetime.fromtimestamp(0)})
         assert result == feed
 
 if __name__ == "__main__":
