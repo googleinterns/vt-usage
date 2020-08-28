@@ -1,7 +1,6 @@
 from datetime import datetime
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from .fixtures import patch_logger, patch_ndb_client
+from .fixtures import in_context
 from models import UserEmail
 from google.cloud import ndb
 
@@ -17,17 +16,11 @@ API_KEY = "abc123"
 
 
 @pytest.fixture
-def patch_key_get_default_email(monkeypatch):
+def key_get_email(monkeypatch):
     def get(self):
         return UserEmail(id="123abc", email="sample@email.address")
 
     monkeypatch.setattr(ndb.Key, 'get', get)
-
-
-@pytest.fixture(autouse=True)
-def use_multiple_fixtures(patch_ndb_client, patch_logger, patch_key_get_default_email):
-    # This wrapper will apply many fixtures to all tests.
-    pass
 
 
 @pytest.fixture
@@ -43,7 +36,8 @@ def patch_get_secret(monkeypatch):
     monkeypatch.setattr(jwt, 'decode', decode)
 
 
-def test_query_results_empty_list(patch_get_secret):
+@pytest.mark.usefixtures("in_context", "key_get_email", "patch_get_secret")
+def test_query_results_empty_list():
     r = client.post(
         URL,
         headers=correct_headers,
@@ -52,7 +46,8 @@ def test_query_results_empty_list(patch_get_secret):
     assert r.status_code == 200
 
 
-def test_query_results_normal_request(patch_get_secret):
+@pytest.mark.usefixtures("in_context", "key_get_email", "patch_get_secret")
+def test_query_results_normal_request():
     type_list = ["file", "url", "domain", "ip_address"]
     r = client.post(
         URL,
@@ -73,6 +68,7 @@ def test_query_results_normal_request(patch_get_secret):
     assert r.status_code == 200
 
 
+@pytest.mark.usefixtures("in_context", "key_get_email")
 def test_query_results_bad_type():
     r = client.post(
         URL,
@@ -92,7 +88,8 @@ def test_query_results_bad_type():
     assert r.status_code == 422
 
 
-def test_query_results_links_and_meta(patch_get_secret):
+@pytest.mark.usefixtures("in_context", "key_get_email", "patch_get_secret")
+def test_query_results_links_and_meta():
     links = {
         "self": "https://google.com",
         "next": "https://gmail.com",
@@ -112,7 +109,8 @@ def test_query_results_links_and_meta(patch_get_secret):
 
 
 @pytest.mark.skip('Don\'t need to check authentication for now')
-def test_query_results_wrong_headers(patch_key_get_default_email):
+@pytest.mark.usefixtures("in_context", "key_get_email")
+def test_query_results_wrong_headers():
     r = client.post(
         URL,
         headers={},
@@ -122,6 +120,7 @@ def test_query_results_wrong_headers(patch_key_get_default_email):
     assert r.json() == {"detail": "Access forbidden"}
 
 
+@pytest.mark.usefixtures("in_context", "key_get_email")
 def test_query_missing_mandatory_field():
     request = {
         "api_key": API_KEY,
@@ -140,6 +139,7 @@ def test_query_missing_mandatory_field():
         assert r.status_code == 422
 
 
+@pytest.mark.usefixtures("in_context", "key_get_email")
 def test_query_results_missing_field_in_data():
     obj = {
         "attributes": {},
