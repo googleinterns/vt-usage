@@ -14,13 +14,13 @@ app = FastAPI()
 
 
 def setup_cloud_logging():
-    logger = logging.Client()
-    logger.get_default_handler()
-    logger.setup_logging()
+    if "GAE_APPLICATION" in os.environ:
+        logger = logging.Client()
+        logger.get_default_handler()
+        logger.setup_logging()
 
 
-if "GAE_APPLICATION" in os.environ:
-    setup_cloud_logging()
+setup_cloud_logging()
 
 
 @app.get("/")
