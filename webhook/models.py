@@ -1,7 +1,7 @@
 from enum import Enum
 from google.cloud import ndb
 from pydantic import BaseModel, validator
-from typing import List, Optional, Dict, Union
+from typing import List, Dict
 
 import re
 
@@ -42,7 +42,7 @@ class APIKeyEmail(APIKey):
 
     @validator("email")
     def email_validator(cls, v):
-        regex = "[a-z0-9\.\-]+[@]\w+[.]\w+$"
+        regex = r"[a-z0-9\.\-]+[@]\w+[.]\w+$"
 
         if not re.match(regex, v):
             raise ValueError("Email address is not valid!")

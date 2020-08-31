@@ -1,24 +1,17 @@
-from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from .fixtures import in_context, patch_transaction
 from google.cloud import ndb
-from main import app
 from models import UserEmail
 
+import main
 import pytest
 
-client = TestClient(app)
+client = TestClient(main.app)
 
 URL = "/email-address/"
 
 
-@pytest.fixture(autouse=True)
-def patch_transaction(monkeypatch):
-    def transaction(func):
-        func()
-
-    monkeypatch.setattr(ndb, 'transaction', transaction)
-
-
+@pytest.mark.usefixtures("in_context", "patch_transaction")
 def test_email_address_new(monkeypatch):
     data = {
         "api_key": "abcabc",
@@ -36,10 +29,10 @@ def test_email_address_new(monkeypatch):
     monkeypatch.setattr(ndb.Key, "get", get)
 
     r = client.post(URL, json=data)
-
     assert r.status_code == 201
 
 
+@pytest.mark.usefixtures("in_context", "patch_transaction")
 def test_email_address_update(monkeypatch):
     data = {
         "api_key": "abcabc",
@@ -63,6 +56,7 @@ def test_email_address_update(monkeypatch):
     assert r.status_code == 200
 
 
+@pytest.mark.usefixtures("in_context", "patch_transaction")
 def test_email_address_delete(monkeypatch):
     data = {
         "api_key": "abcabc"

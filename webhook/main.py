@@ -1,29 +1,23 @@
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, utils
 from datetime import datetime
-from fastapi import FastAPI, Header, HTTPException, status, Response, Body
+import json
+import logging as log
+import os
+
+from fastapi import FastAPI, HTTPException, status, Response
 from fastapi.encoders import jsonable_encoder
 from google.cloud import logging, ndb, secretmanager_v1 as secretmanager
-from typing import Optional, Dict
-
 from models import VTAPI, APIKey, APIKeyEmail, UserEmail, AuthUser
-
-import base64
-import json
 import jwt
-import logging as log
-import hashlib
+
 
 app = FastAPI()
-client = ndb.Client()
 
 
 def setup_cloud_logging():
-    logger = logging.Client()
-    logger.get_default_handler()
-    logger.setup_logging()
+    if "GAE_APPLICATION" in os.environ:
+        logger = logging.Client()
+        logger.get_default_handler()
+        logger.setup_logging()
 
 
 setup_cloud_logging()
@@ -57,6 +51,8 @@ async def auth(request: AuthUser):
 
 @app.post("/query-results/")
 async def send_query_results(request: VTAPI):
+    client = ndb.Client()
+
     try:
         decoded = jwt.decode(request.jwt_token,
                              get_secret('jwt_secret'),
@@ -97,6 +93,7 @@ async def set_email(content: APIKeyEmail, response: Response):
 
         email_obj.put()
 
+    client = ndb.Client()
     with client.context():
         ndb.transaction(lambda: update_email(
             content.api_key, content.email, response))
@@ -104,5 +101,6 @@ async def set_email(content: APIKeyEmail, response: Response):
 
 @app.delete("/email-address/")
 async def delete_email(api_key: APIKey):
+    client = ndb.Client()
     with client.context():
         ndb.Key("UserEmail", api_key.api_key).delete()
