@@ -21,6 +21,12 @@ except Exception as e:
     print("No module 'requests' found. Install: pip install requests")
     sys.exit(1)
 
+try:
+    import vt
+except Exception as e:
+    print("No module 'vt' found. Install pip install vt-py")
+    sys.exit(1)
+
 # ossec.conf configuration:
 #  <integration>
 #      <name>virustotal</name>
@@ -37,7 +43,7 @@ json_alert = {}
 now = time.strftime("%a %b %d %H:%M:%S %Z %Y")
 
 # Set paths
-LOG_FILE = '{0}/logs/integrations.log'.format(PWD)
+LOG_FILE_PATH = '{0}/logs/integrations.log'.format(PWD)
 SOCKET_ADDR = '{0}/queue/ossec/queue'.format(PWD)
 
 
@@ -74,9 +80,8 @@ def debug(msg):
 
         print(msg)
 
-        f = open(LOG_FILE, "a")
-        f.write(msg)
-        f.close()
+        with open(LOG_FILE_PATH, "a") as log_file:
+            log_file.write(msg)
 
 
 def in_database(data, hash):
@@ -86,39 +91,29 @@ def in_database(data, hash):
     return True
 
 
-def query_api(hash, apikey):
-    headers = {
-        'x-apikey': apikey,
-        "Accept-Encoding": "gzip, deflate",
-        "User-Agent": "gzip,  Python library-client-VirusTotal"
-    }
-    response = requests.get('https://www.virustotal.com/api/v3/files/{}'.format(hash), headers=headers)
-    if response.status_code == 200:
-        return response.json()["data"]["attributes"]
+def get_file_info(hash, apikey):
+    """
+
+    @param hash: MD5 hash of the file that is sent to VirusTotal.
+    @param apikey: VirusTotal API key.
+    @return: Instance of vt.Object that contains information about about requested file.
+    """
+    vt_client = vt.Client(apikey)
+
+    file_info = vt_client.get_object("/files/{}".format(hash))
+
+    if file_info is not None:
+        return file_info
     else:
         alert_output = {}
         alert_output["virustotal"] = {}
         alert_output["integration"] = "virustotal"
 
-        if response.status_code == 204:
-            debug("# Error: VirusTotal Public API request rate limit reached")
-            alert_output["virustotal"]["error"] = response.status_code
-            alert_output["virustotal"]["description"] = "Error: Public API request rate limit reached"
-            send_event(alert_output)
-            exit(0)
-        elif response.status_code == 403:
-            debug("# Error: VirusTotal credentials, required privileges error")
-            alert_output["virustotal"]["error"] = response.status_code
-            alert_output["virustotal"]["description"] = "Error: Check credentials"
-            send_event(alert_output)
-            exit(0)
-        else:
-            debug("# Error when conecting VirusTotal API")
-            alert_output["virustotal"]["error"] = response.status_code
-            alert_output["virustotal"]["description"] = "Error: API request fail"
-            send_event(alert_output)
-            response.raise_for_status()
-            exit(0)
+        debug("# Error when conecting VirusTotal API")
+        alert_output["virustotal"]["description"] = "Error: API request fail"
+        send_event(alert_output)
+        exit(0)
+
 
 
 def request_virustotal_info(alert, apikey):
@@ -129,7 +124,7 @@ def request_virustotal_info(alert, apikey):
         return None
 
     # Request info using VirusTotal API
-    data = query_api(alert["_source"]["syscheck"]["md5_after"], apikey)
+    file_info = get_file_info(alert["_source"]["syscheck"]["md5_after"], apikey)
 
     # Create alert
     alert_output["virustotal"] = {}
@@ -156,7 +151,7 @@ def request_virustotal_info(alert, apikey):
 
     # Populate JSON Output object with VirusTotal request
     for info in wanted_info:
-        alert_output["virustotal"][info] = data.get(info, None)
+        alert_output["virustotal"][info] = file_info.get(info)
 
     debug(alert_output)
 
@@ -190,9 +185,8 @@ if __name__ == "__main__":
             bad_arguments = True
 
         # Logging the call
-        f = open(LOG_FILE, 'a')
-        f.write(msg + '\n')
-        f.close()
+        with open(LOG_FILE_PATH, 'a') as log_file:
+            log_file.write(msg + '\n')
 
         if bad_arguments:
             debug("# Exiting: Bad arguments.")
