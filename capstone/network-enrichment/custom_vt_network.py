@@ -48,8 +48,10 @@ def request_virustotal_info(alert, api_key):
     }
 
     errors_desc = defaultdict(lambda: 'Error: API request failed', {
-        204: 'Error: API request rate limit reached',
-        403: 'Error: Check credentials'
+        200: 'Success',
+        401: 'Error: Check credentials',
+        429: 'Error: Quota Exceeded',
+        
     })
 
     alert_output = alert['data'].copy()
@@ -59,14 +61,12 @@ def request_virustotal_info(alert, api_key):
     srcip = alert['data']['srcip']
     vt_data_ip = requests.get('https://www.virustotal.com/api/v3/ip_addresses/{}'.format(srcip), headers={'x-apikey': api_key})
 
+    alert_output['vt-enrichment']['error'] = vt_data_ip.status_code
+    alert_output['vt-enrichment']['description'] = errors_desc[vt_data_ip.status_code]
+
     if vt_data_ip.status_code == 200:
         vt_data_ip_filtered = {key: val for key, val in vt_data_ip.json()['data']['attributes'].items() if key in allowed_fields_ip}
         alert_output['vt-enrichment'].update(vt_data_ip_filtered)
-    
-    else:
-        alert_output['vt-enrichment']['error'] = vt_data_ip.status_code
-        alert_output['vt-enrichment']['description'] = errors_desc[vt_data_ip.status_code]
-        return alert_output
 
     vt_data_urls = requests.get('https://www.virustotal.com/api/v3/ip_addresses/{}/urls'.format(srcip), headers={'x-apikey': api_key})
 
@@ -74,8 +74,8 @@ def request_virustotal_info(alert, api_key):
         related_urls = [url['url'] for url in vt_data_urls.json()['data']]
         alert_output['vt-enrichment']['urls'] = related_urls
     else:
-        alert_output['vt-enrichment']['error'] = vt_data_ip.status_code
-        alert_output['vt-enrichment']['description'] = errors_desc[vt_data_ip.status_code]
+        alert_output['vt-enrichment']['urls-error'] = vt_data_ip.status_code
+        alert_output['vt-enrichment']['urls-description'] = errors_desc[vt_data_ip.status_code]
 
     return alert_output
 
@@ -89,6 +89,8 @@ def main(alert_filename, api_key, hook_url):
     if not check_existing_ip(alert_json['data']['srcip']):
         alert_output = request_virustotal_info(alert_json, api_key)
         send_event(alert_output, alert_json['agent'])
+    else:
+        logging.info('IP found again: ' + alert_json['data']['srcip'])
 
 
 if __name__ == "__main__":
@@ -96,7 +98,7 @@ if __name__ == "__main__":
                         filemode='a',
                         format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
                         datefmt='%H:%M:%S',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
 
     if len(sys.argv) >= 4:
         main(sys.argv[1], sys.argv[2], sys.argv[3])

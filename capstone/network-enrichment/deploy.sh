@@ -8,13 +8,13 @@ ssh wazuh-manager << EOF
     chown root:ossec /var/ossec/integrations/custom-vt-network
 
     OSSECCONF=$(cat /var/ossec/etc/ossec.conf)
-    if [[ '$OSSECCONF' != *'custom-vt-network'* ]]; then
+    if [[ "$OSSECCONF" != *"custom-vt-network"* ]]; then
         echo "
 <ossec_config>
     <integration>
         <name>custom-vt-network</name>
         <group>sshd</group>
-        <api_key>bd23bf03d9975b3b5c22b5963c0b63293fa38170daaf2d8a5ab3c84747819799</api_key>
+        <api_key>YOUR_API_KEY</api_key>
         <alert_format>json</alert_format>
     </integration>
 </ossec_config>" >> /var/ossec/etc/ossec.conf
