@@ -1,0 +1,88 @@
+ {
+    "predecoder": {
+    "hostname": "wazuh-manager-instance",
+    "program_name": "sshd",
+    "timestamp": "Aug 31 12:19:17"
+    },
+    "input": {
+    "type": "log"
+    },
+    "agent": {
+    "name": "wazuh-manager-instance",
+    "id": "000"
+    },
+    "data": {
+    "srcuser": "ssl",
+    "srcip": "188.166.78.16"
+    },
+    "manager": {
+    "name": "wazuh-manager-instance"
+    },
+    "rule": {
+    "mail": false,
+    "level": 5,
+    "pci_dss": [
+        "10.2.4",
+        "10.2.5",
+        "10.6.1"
+    ],
+    "hipaa": [
+        "164.312.b"
+    ],
+    "tsc": [
+        "CC6.1",
+        "CC6.8",
+        "CC7.2",
+        "CC7.3"
+    ],
+    "description": "sshd: Attempt to login using a non-existent user",
+    "groups": [
+        "syslog",
+        "sshd",
+        "invalid_login",
+        "authentication_failed"
+    ],
+    "nist_800_53": [
+        "AU.14",
+        "AC.7",
+        "AU.6"
+    ],
+    "gdpr": [
+        "IV_35.7.d",
+        "IV_32.2"
+    ],
+    "firedtimes": 32,
+    "mitre": {
+        "technique": [
+        "Brute Force"
+        ],
+        "id": [
+        "T1110"
+        ],
+        "tactic": [
+        "Credential Access"
+        ]
+    },
+    "id": "5710",
+    "gpg13": [
+        "7.1"
+    ]
+    },
+    "location": "/var/log/auth.log",
+    "decoder": {
+    "parent": "sshd",
+    "name": "sshd"
+    },
+    "id": "1598876357.6851280",
+    "GeoLocation": {
+    "city_name": "Amsterdam",
+    "country_name": "Netherlands",
+    "region_name": "North Holland",
+    "location": {
+        "lon": 4.9392,
+        "lat": 52.352
+    }
+    },
+    "full_log": "Aug 31 12:19:17 wazuh-manager-instance sshd[28564]: Failed password for invalid user ssl from 188.166.78.16 port 60277 ssh2",
+    "timestamp": "2020-08-31T12:19:17.752+0000"
+}
