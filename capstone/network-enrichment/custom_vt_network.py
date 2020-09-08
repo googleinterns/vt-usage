@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/var/ossec/framework/python/bin/python3.8
   
 import json
 import logging
@@ -10,7 +10,7 @@ from collections import defaultdict
 from socket import socket, AF_UNIX, SOCK_DGRAM
 
 
-pwd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+PWD = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 
 def send_event(msg, agent = None):
@@ -22,7 +22,7 @@ def send_event(msg, agent = None):
     logging.info(string)
 
     pwd = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-    socket_addr = '{0}/queue/ossec/queue'.format(pwd)
+    socket_addr = f'{pwd}/queue/ossec/queue'
 
     sock = socket(AF_UNIX, SOCK_DGRAM)
     sock.connect(socket_addr)
@@ -81,10 +81,8 @@ def request_virustotal_info(alert, api_key):
 
 
 def main(alert_filename, api_key, hook_url):
-    alert_file = open(alert_filename)
-
-    alert_json = json.loads(alert_file.read())
-    alert_file.close()
+    with open(alert_filename) as alert_file:
+        alert_json = json.loads(alert_file.read())
 
     if not check_existing_ip(alert_json['data']['srcip']):
         alert_output = request_virustotal_info(alert_json, api_key)
