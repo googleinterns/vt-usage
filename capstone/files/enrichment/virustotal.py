@@ -1,30 +1,27 @@
-#!/usr/bin/env python
-# Copyright (C) 2015-2020, Wazuh Inc.
-# October 19, 2017.
+#!/var/ossec/framework/python/bin/python3.8
+# Copyright (C) 2015-2020, Wazuh Inc, Google LLC.
+# September 8, 2020.
 #
 # This program is free software; you can redistribute it
 # and/or modify it under the terms of the GNU General Public
 # License (version 2) as published by the FSF - Free Software
 # Foundation.
-# Wazuh, Inc <support@wazuh.com>
+# Wazuh Inc <support@wazuh.com>
+# Google LLC
 
 import json
-import sys
-import time
+import logging
 import os
+import sys
 from socket import socket, AF_UNIX, SOCK_DGRAM
 
 try:
-    import requests
-    from requests.auth import HTTPBasicAuth
-except Exception as e:
-    print("No module 'requests' found. Install: pip install requests")
-    sys.exit(1)
-
-try:
     import vt
-except Exception as e:
-    print("No module 'vt' found. Install pip install vt-py")
+except ImportError as e:
+    print("No module 'vt' found."
+          "Follow guide here https://virustotal.github.io/vt-py/howtoinstall.html")
+    print("WARNING! Do not install this library using pip!"
+          "Currently released version can break this script.")
     sys.exit(1)
 
 # ossec.conf configuration:
@@ -35,36 +32,46 @@ except Exception as e:
 #      <alert_format>json</alert_format>
 #  </integration>
 
-# Global vars
-
 DEBUG = False
 PWD = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-json_alert = {}
-now = time.strftime("%a %b %d %H:%M:%S %Z %Y")
 
 # Set paths
-LOG_FILE_PATH = '{0}/logs/integrations.log'.format(PWD)
-SOCKET_ADDR = '{0}/queue/ossec/queue'.format(PWD)
+LOG_FILE_PATH = f'{PWD}/logs/integrations.log'
+SOCKET_ADDR = f'{PWD}/queue/ossec/queue'
+
+# Set logger
+logging.basicConfig(filename=f'{PWD}/logs/integrations.log',
+                    filemode='a',
+                    format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
+                    datefmt='%H:%M:%S',
+                    level=logging.INFO)
 
 
 def main(args):
-    debug("# Starting")
+    """Main function for enrichment flow.
+
+    @param args: System args [file location, api key].
+    """
+    logging.info("# Starting")
 
     # Read args
     alert_file_location = args[1]
     apikey = args[2]
 
-    debug("# API Key")
-    debug(apikey)
+    logging.info("# API Key")
+    logging.info(apikey)
 
-    debug("# File location")
-    debug(alert_file_location)
+    logging.info("# File location")
+    logging.info(alert_file_location)
+
+    json_alert = {}
 
     # Load alert. Parse JSON object.
     with open(alert_file_location) as alert_file:
         json_alert = json.load(alert_file)
-    debug("# Processing alert")
-    debug(json_alert)
+
+    logging.info("# Processing alert")
+    logging.info(json_alert)
 
     # Request VirusTotal info
     msg = request_virustotal_info(json_alert, apikey)
@@ -74,25 +81,8 @@ def main(args):
         send_event(msg, json_alert["agent"])
 
 
-def debug(msg):
-    if DEBUG:
-        msg = "{0}: {1}\n".format(now, msg)
-
-        print(msg)
-
-        with open(LOG_FILE_PATH, "a") as log_file:
-            log_file.write(msg)
-
-
-def in_database(data, hash):
-    result = data['response_code']
-    if result == 0:
-        return False
-    return True
-
-
 def get_file_info(hash, apikey):
-    """
+    """A function that gets file information from VirusTotal.
 
     @param hash: MD5 hash of the file that is sent to VirusTotal.
     @param apikey: VirusTotal API key.
@@ -100,7 +90,7 @@ def get_file_info(hash, apikey):
     """
     vt_client = vt.Client(apikey)
 
-    file_info = vt_client.get_object("/files/{}".format(hash))
+    file_info = vt_client.get_object(f"/files/{hash}")
 
     if file_info is not None:
         return file_info
@@ -109,22 +99,27 @@ def get_file_info(hash, apikey):
         alert_output["virustotal"] = {}
         alert_output["integration"] = "virustotal"
 
-        debug("# Error when conecting VirusTotal API")
+        logging.error("# Error when conecting VirusTotal API")
         alert_output["virustotal"]["description"] = "Error: API request fail"
         send_event(alert_output)
         exit(0)
 
 
-
 def request_virustotal_info(alert, apikey):
+    """A function that requests a vt.Object and parses it into Wazuh alert.
+
+    @param alert: Wazuh alert that we want to enrich.
+    @param apikey: VirusTotal API key.
+    @return: Wazuh alert enriched with VirusTotal data.
+    """
     alert_output = {}
 
     # If there is no a md5 checksum present in the alert. Exit.
-    if "md5_after" not in alert["_source"]["syscheck"]:
+    if "md5_after" not in alert["syscheck"]:
         return None
 
     # Request info using VirusTotal API
-    file_info = get_file_info(alert["_source"]["syscheck"]["md5_after"], apikey)
+    file_info = get_file_info(alert["syscheck"]["md5_after"], apikey)
 
     # Create alert
     alert_output["virustotal"] = {}
@@ -132,12 +127,12 @@ def request_virustotal_info(alert, apikey):
     alert_output["virustotal"]["found"] = 0
     alert_output["virustotal"]["malicious"] = 0
     alert_output["virustotal"]["source"] = {}
-    alert_output["virustotal"]["source"]["alert_id"] = alert["_id"]
-    alert_output["virustotal"]["source"]["file"] = alert["_source"]["syscheck"]["path"]
-    alert_output["virustotal"]["source"]["md5"] = alert["_source"]["syscheck"]["md5_after"]
-    alert_output["virustotal"]["source"]["sha1"] = alert["_source"]["syscheck"]["sha1_after"]
+    alert_output["virustotal"]["source"]["alert_id"] = alert["id"]
+    alert_output["virustotal"]["source"]["file"] = alert["syscheck"]["path"]
+    alert_output["virustotal"]["source"]["md5"] = alert["syscheck"]["md5_after"]
+    alert_output["virustotal"]["source"]["sha1"] = alert["syscheck"]["sha1_after"]
 
-    alert_output["virustotal"]["malicious"] = 1
+    alert_output["virustotal"]["malicious"] = 1  # TODO: Define when file is malicious @niedziol
 
     wanted_info = [
         "meaningful_name",
@@ -153,19 +148,24 @@ def request_virustotal_info(alert, apikey):
     for info in wanted_info:
         alert_output["virustotal"][info] = file_info.get(info)
 
-    debug(alert_output)
+    logging.info(alert_output)
 
     return alert_output
 
 
 def send_event(msg, agent=None):
-    if not agent or agent["id"] == "000":
-        string = '1:virustotal:{0}'.format(json.dumps(msg))
-    else:
-        string = '1:[{0}] ({1}) {2}->virustotal:{3}'.format(agent["id"], agent["name"],
-                                                            agent["ip"] if "ip" in agent else "any", json.dumps(msg))
+    """A function that sends ready alert into Elastic.
 
-    debug(string)
+    @param msg: Python dict with alert.
+    @param agent: Wazuh agent.
+    """
+    if not agent or agent["id"] == "000":
+        string = f'1:virustotal:{json.dumps(msg)}'
+    else:
+        string = f'1:[{agent["id"]}] ({agent["name"]})' \
+                 f'{agent["ip"] if "ip" in agent else "any"}->virustotal:{json.dumps(msg)}'
+
+    logging.info(string)
     sock = socket(AF_UNIX, SOCK_DGRAM)
     sock.connect(SOCKET_ADDR)
     sock.send(string.encode())
@@ -174,27 +174,14 @@ def send_event(msg, agent=None):
 
 if __name__ == "__main__":
     try:
-        # Read arguments
-        bad_arguments = False
         if len(sys.argv) >= 4:
-            msg = '{0} {1} {2} {3} {4}'.format(now, sys.argv[1], sys.argv[2], sys.argv[3],
-                                               sys.argv[4] if len(sys.argv) > 4 else '')
-            DEBUG = (len(sys.argv) > 4 and sys.argv[4] == 'debug')
+            logging.info(f"{sys.argv[1]} {sys.argv[2]} {sys.argv[3]} {sys.argv[4]}")
         else:
-            msg = '{0} Wrong arguments'.format(now)
-            bad_arguments = True
+            logging.error(f"# Exiting: Bad arguments. {sys.argv}")
+            exit(1)
 
-        # Logging the call
-        with open(LOG_FILE_PATH, 'a') as log_file:
-            log_file.write(msg + '\n')
-
-        if bad_arguments:
-            debug("# Exiting: Bad arguments.")
-            sys.exit(1)
-
-        # Main function
         main(sys.argv)
 
     except Exception as e:
-        debug(str(e))
+        logging.error(str(e))
         raise
