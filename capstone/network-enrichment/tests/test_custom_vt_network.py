@@ -4,8 +4,8 @@ import requests
 import socket
 import sys
 import unittest
+from unittest.mock import patch
 
-# from custom_vt_network import main
 import custom_vt_network
 
 mock_vt_response = {
