@@ -58,12 +58,6 @@ def main(args):
     alert_file_location = args[1]
     apikey = args[2]
 
-    logging.info("# API Key")
-    logging.info(apikey)
-
-    logging.info("# File location")
-    logging.info(alert_file_location)
-
     json_alert = {}
 
     # Load alert. Parse JSON object.
@@ -79,6 +73,8 @@ def main(args):
     # If positive match, send event to Wazuh Manager
     if msg:
         send_event(msg, json_alert["agent"])
+    else:
+        logging.error(f"MD5 hash of file not found {json_alert}")
 
 
 def get_file_info(hash, apikey):
@@ -92,17 +88,7 @@ def get_file_info(hash, apikey):
 
     file_info = vt_client.get_object(f"/files/{hash}")
 
-    if file_info is not None:
-        return file_info
-    else:
-        alert_output = {}
-        alert_output["virustotal"] = {}
-        alert_output["integration"] = "virustotal"
-
-        logging.error("# Error when conecting VirusTotal API")
-        alert_output["virustotal"]["description"] = "Error: API request fail"
-        send_event(alert_output)
-        exit(0)
+    return file_info
 
 
 def request_virustotal_info(alert, apikey):
@@ -110,7 +96,7 @@ def request_virustotal_info(alert, apikey):
 
     @param alert: Wazuh alert that we want to enrich.
     @param apikey: VirusTotal API key.
-    @return: Wazuh alert enriched with VirusTotal data.
+    @return: Wazuh alert enriched with VirusTotal data or None if the file does not have md5 hash.
     """
     alert_output = {}
 
@@ -121,35 +107,42 @@ def request_virustotal_info(alert, apikey):
     # Request info using VirusTotal API
     file_info = get_file_info(alert["syscheck"]["md5_after"], apikey)
 
-    # Create alert
-    alert_output["virustotal"] = {}
-    alert_output["integration"] = "virustotal"
-    alert_output["virustotal"]["found"] = 0
-    alert_output["virustotal"]["malicious"] = 0
-    alert_output["virustotal"]["source"] = {}
-    alert_output["virustotal"]["source"]["alert_id"] = alert["id"]
-    alert_output["virustotal"]["source"]["file"] = alert["syscheck"]["path"]
-    alert_output["virustotal"]["source"]["md5"] = alert["syscheck"]["md5_after"]
-    alert_output["virustotal"]["source"]["sha1"] = alert["syscheck"]["sha1_after"]
+    alert_output = {}
 
-    alert_output["virustotal"]["malicious"] = 1  # TODO: Define when file is malicious @niedziol
+    if file_info is None:
+        alert_output["virustotal"] = {}
+        alert_output["integration"] = "virustotal"
 
-    wanted_info = [
-        "meaningful_name",
-        "capabilities_tags",
-        "first_submission_date",
-        "last_analysis_stats",
-        "reputation",
-        "sigma_analysis_stats",
-        "type_tag",
-    ]
+        logging.error("# Error when conecting VirusTotal API")
+        alert_output["virustotal"]["description"] = "Error: API request fail"
+    else:
+        alert_output["virustotal"] = {}
+        alert_output["integration"] = "virustotal"
+        alert_output["virustotal"]["found"] = 0
+        alert_output["virustotal"]["malicious"] = 0
+        alert_output["virustotal"]["source"] = {}
+        alert_output["virustotal"]["source"]["alert_id"] = alert["id"]
+        alert_output["virustotal"]["source"]["file"] = alert["syscheck"]["path"]
+        alert_output["virustotal"]["source"]["md5"] = alert["syscheck"]["md5_after"]
+        alert_output["virustotal"]["source"]["sha1"] = alert["syscheck"]["sha1_after"]
 
-    # Populate JSON Output object with VirusTotal request
-    for info in wanted_info:
-        alert_output["virustotal"][info] = file_info.get(info)
+        alert_output["virustotal"]["malicious"] = 1  # TODO: Define when file is malicious @niedziol
+
+        wanted_info = [
+            "meaningful_name",
+            "capabilities_tags",
+            "first_submission_date",
+            "last_analysis_stats",
+            "reputation",
+            "sigma_analysis_stats",
+            "type_tag",
+        ]
+
+        # Populate JSON Output object with VirusTotal request
+        for info in wanted_info:
+            alert_output["virustotal"][info] = file_info.get(info)
 
     logging.info(alert_output)
-
     return alert_output
 
 
