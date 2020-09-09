@@ -72,4 +72,11 @@ jobs:
         pip install -r requirements-dev.txt
         pytest
         deactivate
-
+    - name: Run tests in capstone/network-enrichment
+      run: |
+        cd capstone/network-enrichment
+        python3 -m venv venv
+        . venv/bin/activate
+        pip install -r requirements-dev.txt
+        pytest
+        deactivate

@@ -1,0 +1,15 @@
+{
+    "srcuser": "ssl",
+    "srcip": "188.166.78.16",
+    "integration": "custom-vt-network",
+    "vt-enrichment": {
+        "error": 200,
+        "description": "Success",
+        "last_analysis_stats": {"harmless": 1, "malicious": 2, "undetected": 3},
+        "last_https_certificate": "last_https_certificate",
+        "reputation": "reputation",
+        "tags": "tags",
+        "whois": "whois",
+        "urls": ["a", "b"]
+    }
+}
