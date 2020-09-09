@@ -7,8 +7,7 @@ ssh wazuh-manager << EOF
     chmod 750 /var/ossec/integrations/custom-vt-network
     chown root:ossec /var/ossec/integrations/custom-vt-network
 
-    OSSECCONF=$(cat /var/ossec/etc/ossec.conf)
-    if [[ "$OSSECCONF" != *"custom-vt-network"* ]]; then
+    if ! grep -q "custom-vt-network" /var/ossec/etc/ossec.conf; then
         echo "
 <ossec_config>
     <integration>
