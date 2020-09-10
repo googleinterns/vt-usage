@@ -126,8 +126,6 @@ def request_virustotal_info(alert, apikey):
         alert_output["virustotal"]["source"]["md5"] = alert["syscheck"]["md5_after"]
         alert_output["virustotal"]["source"]["sha1"] = alert["syscheck"]["sha1_after"]
 
-        alert_output["virustotal"]["malicious"] = 1  # TODO: Define when file is malicious @niedziol
-
         wanted_info = [
             "meaningful_name",
             "capabilities_tags",

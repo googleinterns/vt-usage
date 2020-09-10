@@ -11,6 +11,7 @@ ssh wazuh-manager << EOF
     mv virustotal /var/ossec/integrations/virustotal
 
     if ! grep -q "<name>virustotal</name>" /var/ossec/etc/ossec.conf; then
+        echo "Updating configuration"
         echo "
 <ossec_config>
     <integration>
