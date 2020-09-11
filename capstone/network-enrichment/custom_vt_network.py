@@ -38,8 +38,11 @@ def check_existing_ip(ip):
 
 def request_virustotal_info(alert, api_key):
     allowed_fields_ip = {
+        'continent',
+        'country',
         'last_analysis_stats',
         'last_https_certificate',
+        'regional_internet_registry',
         'reputation',
         'tags',
         'whois',
