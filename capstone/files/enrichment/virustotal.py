@@ -118,10 +118,9 @@ def request_virustotal_info(alert, apikey):
     else:
         alert_output["virustotal"] = {}
         alert_output["integration"] = "virustotal"
-        alert_output["virustotal"]["found"] = 0
-        alert_output["virustotal"]["malicious"] = 0
         alert_output["virustotal"]["source"] = {}
         alert_output["virustotal"]["source"]["alert_id"] = alert["id"]
+
         alert_output["virustotal"]["source"]["file"] = alert["syscheck"]["path"]
         alert_output["virustotal"]["source"]["md5"] = alert["syscheck"]["md5_after"]
         alert_output["virustotal"]["source"]["sha1"] = alert["syscheck"]["sha1_after"]
