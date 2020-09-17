@@ -1,5 +1,11 @@
 {% extends "base.html.jinja" %}
 {% block body %}
-<h1>Your file is now uploaded.</h1>
-<p> This is it's name on our hosting: {{ name }}</p>
+<div class="card text-center mt-5">
+    <div class="card-header">
+        <h1 class="card-title">Your file is now uploaded.</h1>
+    </div>
+    <div class="card-body">
+        <p> This is it's name on our hosting: <a href="/{{ name }}">{{ name }}</a></p>
+    </div>
+</div>
 {% endblock %}
