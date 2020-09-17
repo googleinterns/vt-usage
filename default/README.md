@@ -12,4 +12,7 @@ Authorization to webhook is done using private API key (stored in Cloud Secret M
 
 ## Deployment
 
-There are _app.yaml_ configuration file and _cron.yaml_ for configuring cron that are being used for deployment to Google App Engine. Deploy can be done using `gcloud app deploy` command.
+There are _app.yaml_ configuration file and _cron.yaml_ for configuring cron that are being used for deployment to Google App Engine. Deploy can be done using 
+```
+gcloud app deploy
+```
