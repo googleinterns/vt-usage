@@ -132,9 +132,11 @@ def request_virustotal_info(alert, apikey):
         for info in wanted_info:
             alert_output["virustotal"][info] = file_info.get(info)
     except vt.error.APIError as e:
-        if "404 Not Found" in e.message:
+        if e.code == "NotFoundError":
             logging.info("# File not found in VirusTotal")
             alert_output["virustotal"]["found"] = 0
+        else:
+            logging.error("# ERROR: Retrieving VT object failed.")
 
     logging.info(alert_output)
     return alert_output
