@@ -1,0 +1,46 @@
+<!--
+  -  VirusTotal integration rules
+  -  Created by Wazuh, Inc.
+  -  Copyright (C) 2015-2020, Wazuh Inc, Google LLC.
+  -  This program is a free software; you can redistribute it and/or modify it under the terms of GPLv2.
+-->
+
+<!-- ID: 87100 - 87199 -->
+
+<group name="virustotal,">
+
+    <rule id="87100" level="0">
+        <decoded_as>json</decoded_as>
+        <field name="integration">virustotal</field>
+        <description>VirusTotal integration messages.</description>
+        <options>no_full_log</options>
+    </rule>
+
+    <rule id="87103" level="3">
+        <if_sid>87100</if_sid>
+        <field name="virustotal.found">0</field>
+        <description>VirusTotal: Alert - No records in VirusTotal database</description>
+        <options>no_full_log</options>
+    </rule>
+
+    <rule id="87104" level="3">
+        <if_sid>87100</if_sid>
+        <field name="virustotal.found">1</field>
+        <field name="virustotal.last_analysis_stats.malicious">0</field>
+        <description>VirusTotal: Alert - $(virustotal.source.file) - No positives found</description>
+        <options>no_full_log</options>
+    </rule>
+
+    <rule id="87105" level="12">
+        <if_sid>87100</if_sid>
+        <field name="virustotal.found">1</field>
+        <field name="virustotal.last_analysis_stats.malicious">^\d+$</field>
+        <description>VirusTotal: Alert - $(virustotal.source.file) engines detected this file</description>
+        <group>gdpr_IV_35.7.d,</group>
+        <options>no_full_log</options>
+        <mitre>
+            <id>T1203</id>
+        </mitre>
+    </rule>
+
+</group>
