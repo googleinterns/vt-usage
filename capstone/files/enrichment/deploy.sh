@@ -1,6 +1,7 @@
 #!/bin/bash
 
 scp virustotal.py wazuh-manager:virustotal
+scp 0490-virustotal_rules.xml wazuh-manager:0490-virustotal_rules.xml
 
 ssh wazuh-manager << EOF
     sudo su
@@ -9,6 +10,7 @@ ssh wazuh-manager << EOF
     chown root:ossec virustotal
 
     mv virustotal /var/ossec/integrations/virustotal
+    mv 0490-virustotal_rules.xml /var/ossec/ruleset/rules
 
     if ! grep -q "<name>virustotal</name>" /var/ossec/etc/ossec.conf; then
         echo "Updating configuration"
