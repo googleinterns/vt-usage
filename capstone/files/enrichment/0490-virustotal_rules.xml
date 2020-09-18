@@ -33,7 +33,8 @@
 
     <rule id="87105" level="12">
         <if_sid>87100</if_sid>
-        <field name="virustotal.last_analysis_stats.malicious">^[1-9]\d*$</field>
+        <field name="virustotal.found">1</field>
+        <field name="virustotal.last_analysis_stats.malicious">^\d+$</field>
         <description>VirusTotal: Alert - $(virustotal.source.file) engines detected this file</description>
         <group>gdpr_IV_35.7.d,</group>
         <options>no_full_log</options>
