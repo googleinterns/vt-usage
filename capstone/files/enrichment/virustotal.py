@@ -83,6 +83,7 @@ def get_file_info(hash, apikey):
     @param hash: MD5 hash of the file that is sent to VirusTotal.
     @param apikey: VirusTotal API key.
     @return: Instance of vt.Object that contains information about about requested file.
+    @raise: vt.error.APIError if file is not found or connection is not established.
     """
     vt_client = vt.Client(apikey)
 
@@ -99,45 +100,41 @@ def request_virustotal_info(alert, apikey):
     @return: Wazuh alert enriched with VirusTotal data or None if the file does not have md5 hash.
     """
     alert_output = {}
+    alert_output["virustotal"] = {}
+    alert_output["integration"] = "virustotal"
+    alert_output["virustotal"]["source"] = {}
+    alert_output["virustotal"]["source"]["alert_id"] = alert["id"]
 
-    # If there is no a md5 checksum present in the alert. Exit.
+    alert_output["virustotal"]["source"]["file"] = alert["syscheck"]["path"]
+    alert_output["virustotal"]["source"]["md5"] = alert["syscheck"]["md5_after"]
+    alert_output["virustotal"]["source"]["sha1"] = alert["syscheck"]["sha1_after"]
+
+    wanted_info = [
+        "meaningful_name",
+        "capabilities_tags",
+        "first_submission_date",
+        "last_analysis_stats",
+        "reputation",
+        "sigma_analysis_stats",
+        "type_tag",
+    ]
+
+    # If there is no a md5 checksum present in the alert - exit.
     if "md5_after" not in alert["syscheck"]:
         return None
 
-    # Request info using VirusTotal API
-    file_info = get_file_info(alert["syscheck"]["md5_after"], apikey)
+    # Request info using vt-py library.
+    try:
+        file_info = get_file_info(alert["syscheck"]["md5_after"], apikey)
+        alert_output["virustotal"]["found"] = 1
 
-    alert_output = {}
-
-    if file_info is None:
-        alert_output["virustotal"] = {}
-        alert_output["integration"] = "virustotal"
-
-        logging.error("# Error when conecting VirusTotal API")
-        alert_output["virustotal"]["description"] = "Error: API request fail"
-    else:
-        alert_output["virustotal"] = {}
-        alert_output["integration"] = "virustotal"
-        alert_output["virustotal"]["source"] = {}
-        alert_output["virustotal"]["source"]["alert_id"] = alert["id"]
-
-        alert_output["virustotal"]["source"]["file"] = alert["syscheck"]["path"]
-        alert_output["virustotal"]["source"]["md5"] = alert["syscheck"]["md5_after"]
-        alert_output["virustotal"]["source"]["sha1"] = alert["syscheck"]["sha1_after"]
-
-        wanted_info = [
-            "meaningful_name",
-            "capabilities_tags",
-            "first_submission_date",
-            "last_analysis_stats",
-            "reputation",
-            "sigma_analysis_stats",
-            "type_tag",
-        ]
-
-        # Populate JSON Output object with VirusTotal request
+        # Populate JSON Output object with VirusTotal request.
         for info in wanted_info:
             alert_output["virustotal"][info] = file_info.get(info)
+    except vt.error.APIError as e:
+        if "404 Not Found" in e.message:
+            logging.info("# File not found in VirusTotal")
+            alert_output["virustotal"]["found"] = 0
 
     logging.info(alert_output)
     return alert_output
