@@ -70,6 +70,7 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
         for user in models.Userdata.query():
             async with aiohttp.ClientSession() as httpSession:
 
+                # Run VT query.
                 async with httpSession.get(
                         f'https://www.virustotal.com/api/v3/intelligence/search?query={user.vt_query}',
                         headers={'x-apikey': user.apikey},
@@ -82,17 +83,19 @@ async def run_queries(x_appengine_cron: Optional[str] = Header(None)):
                         logging.error(f'VT query failed with {vt_resp.status}: {vt_resp.text()}')
                         raise HTTPException(400, 'Bad request')
 
-                    async with httpSession.post('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/',
+                    # Auth to webhook, get JWT token.
+                    async with httpSession.post('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/auth/',
                                                 json={'access_key': get_secret('access_key'), 'vt_key': user.apikey},
                                                 ssl=ssl_context) as auth_resp:
 
                         jwt_token = await auth_resp.text()
-                        payload['jwt_token'] = jwt_token.strip('"')  # webhook sends token with quotes
+                        payload['jwt_token'] = jwt_token.strip('"')  # Webhook sends token with quotes.
 
                         if auth_resp.status != 200:
                             logging.error(f'Authentication on webhook failed with {auth_resp.status}: {auth_resp.text()}')
                             raise HTTPException(403, 'Authentication failed')
 
+                        # Send data with JWT to webhook.
                         async with httpSession.post(user.webhook, json=payload, ssl=ssl_context) as webhook_resp:
 
                             result = await webhook_resp.text()

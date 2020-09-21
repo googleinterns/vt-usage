@@ -128,7 +128,7 @@ def test_run_queries(mock_post, mock_get, mock_q, mock_secret, patch_ndb_client)
     main.models.Userdata.query.assert_called_once()
     aiohttp.ClientSession.get.assert_called_once_with('https://www.virustotal.com/api/v3/intelligence/search?query=test_vt_query', headers=ANY, ssl=ANY)
     aiohttp.ClientSession.post.assert_has_calls(
-        [call('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/', json={'access_key': 'SECRET', 'vt_key': 'test_apikey'}, ssl=ANY),
+        [call('https://webhook-dot-virustotal-step-2020.ew.r.appspot.com/auth/', json={'access_key': 'SECRET', 'vt_key': 'test_apikey'}, ssl=ANY),
          call('test_webhook', json=test_vt_data, ssl=ANY)], any_order=True)
 
 
