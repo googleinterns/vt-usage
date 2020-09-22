@@ -26,7 +26,7 @@ We use 3 VMs, for Elastic Stack, Wazuh Manager and Wazuh Agent. They all are con
 
 ### Data enrichment
 
-There're two types of data alerts enrichment: network and feed. Both of them run a script on alert creation, fetch additional data from virustotal and create a new alert based on it. These alerts will be added to the same wazuh index, with the labels `data.integration: virustotal` and `data.integration: custom-vt-network`.
+There're two types of data alerts enrichment: network and files. Both of them run a script on alert creation, fetch additional data from virustotal and create a new alert based on it. These alerts will be added to the same wazuh index, with the labels `data.integration: virustotal` and `data.integration: custom-vt-network`.
 
 ### Feed
 
