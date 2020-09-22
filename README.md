@@ -36,9 +36,9 @@ Feed is a paid VirusTotal service that gives users the list of all files that ha
 
 You can deploy all the mentioned modules using `deploy.sh` scripts in corresponding directories.
 
-## Learning Project
+## Cron VTI Query
 
-As our pet learning project we developed web application that periodically runs VT query and sends results to a specified webhook. It consists of two parts: 
+We developed web application that periodically runs VT query and sends results to a specified webhook. It consists of two parts: 
 * [Default](https://github.com/googleinterns/step242-2020/tree/master/default) - web service that сonsists of the form collecting users' credentials and a cron job that runs query and sends results to a webhook.
 * [Webhook](https://github.com/googleinterns/step242-2020/tree/master/webhook) - webhook that accepts virustotal response and sends it to email.
 
