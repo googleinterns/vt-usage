@@ -5,5 +5,5 @@ google-cloud-ndb==1.4.1
 google-cloud-secret-manager==1.0.0
 Jinja2==2.11.2
 PyJWT==1.7.1
-python-multipart==0.0.5
+python-multipart==0.0.7
 uvicorn==0.11.7
