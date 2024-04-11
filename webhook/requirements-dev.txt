@@ -27,7 +27,7 @@ httpcore==0.9.1
 httptools==0.1.1
 httpx==0.13.3
 hyperframe==5.2.0
-idna==2.10
+idna==3.7
 isort==4.3.21
 lazy-object-proxy==1.4.3
 mccabe==0.6.1
