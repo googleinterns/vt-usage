@@ -6,7 +6,7 @@ click==7.1.2
 fastapi==0.61.0
 h11==0.9.0
 httptools==0.1.1
-idna==2.10
+idna==3.7
 iniconfig==1.0.1
 Jinja2==2.11.2
 MarkupSafe==1.1.1
