@@ -43,7 +43,7 @@ pytest-aiohttp==0.3.0
 python-multipart==0.0.5
 pytz==2020.1
 redis==3.5.3
-requests==2.24.0
+requests==2.33.0
 rsa==4.6
 six==1.15.0
 starlette==0.13.4
